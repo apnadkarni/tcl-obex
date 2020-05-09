@@ -4,7 +4,7 @@
 #
 # See the file LICENSE for license
 
-namespace eval obex {
+namespace eval obex::core {
 
     variable id_counter 1
     proc GenerateId {} {
@@ -45,7 +45,7 @@ namespace eval obex {
 }
 
 
-proc obex::request::encode {op args} {
+proc obex::core::request::encode {op args} {
     set op [OpCode $op]
     if {$op == 0x80} {
         return [EncodeConnect {*}$args]
@@ -61,7 +61,7 @@ proc obex::request::encode {op args} {
 
 }
 
-proc obex::request::decode {packet outvar} {
+proc obex::core::request::decode {packet outvar} {
     upvar 1 $outvar decoded_packet
     if {[binary scan $packet cuSu op len] != 2 ||
         $len > [string length $packet]} {
@@ -111,7 +111,7 @@ proc obex::request::decode {packet outvar} {
     return 1
 }
 
-proc obex::request::EncodeConnect {args} {
+proc obex::core::request::EncodeConnect {args} {
     set headers [header encode {*}$args]
     # Packet is opcode 0x80, 2 bytes length, version (1.0->0x10),
     # flags (0), 2 bytes max len
@@ -122,7 +122,7 @@ proc obex::request::EncodeConnect {args} {
     return $packet
 }
 
-proc obex::request::encode_setpath {flags constants args} {
+proc obex::core::request::encode_setpath {flags constants args} {
     set headers [header encode {*}$args]
     # Packet is opcode 0x85, 2 bytes length,
     # flags, constants, # followed by headers
@@ -131,7 +131,7 @@ proc obex::request::encode_setpath {flags constants args} {
     return $packet
 }
 
-proc obex::response::decode {packet request_op outvar} {
+proc obex::core::response::decode {packet request_op outvar} {
     # Decodes a standard response which has no leading fields other
     # than the opcode and length.
     #  packet - Binary OBEX packet.
@@ -173,7 +173,7 @@ proc obex::response::decode {packet request_op outvar} {
     return 1
 }
 
-proc obex::response::DecodeConnect {packet outvar} {
+proc obex::core::response::DecodeConnect {packet outvar} {
     # Decodes a OBEX response to a connect request.
     #  packet - Binary OBEX packet.
     #  outvar - name of variable in caller's context where the decoded packet
@@ -236,7 +236,7 @@ proc obex::packet_complete {packet} {
     return [expr {$len <= [string length $packet]}]
 }
 
-proc obex::header::encode {header_name header_value} {
+proc obex::core::header::encode {header_name header_value} {
     set hi [Id $header_name]
     # Top 2 bits encode data type
     switch -exact -- [expr {$hi >> 6}] {
@@ -266,7 +266,7 @@ proc obex::header::encode {header_name header_value} {
     }
 }
 
-proc obex::header::encoden {args} {
+proc obex::core::header::encoden {args} {
     if {[llength $args] == 1} {
         set args [lindex $args 0]
     }
@@ -277,7 +277,7 @@ proc obex::header::encoden {args} {
     return $headers
 }
 
-proc obex::header::DecodeFirst {bytes start} {
+proc obex::core::header::DecodeFirst {bytes start} {
     if {[binary scan $bytes x${start}cu hid] != 1} {
         error "Empty Obex header"
     }
@@ -334,7 +334,7 @@ proc obex::header::DecodeFirst {bytes start} {
     return [list $name $value [expr {$start+$len}]]
 }
 
-proc obex::header::decode {bytes start} {
+proc obex::core::header::decode {bytes start} {
     set nbytes [string length $bytes]
     set headers {}
     while {$start < $nbytes} {
@@ -344,7 +344,7 @@ proc obex::header::decode {bytes start} {
     return $headers
 }
 
-proc obex::header::find {headers key outvar} {
+proc obex::core::header::find {headers key outvar} {
     foreach {name val} $headers {
         if {[string equal -nocase $key $name]} {
             upvar 1 $outvar v
@@ -355,7 +355,7 @@ proc obex::header::find {headers key outvar} {
     return 0
 }
 
-proc obex::header::findall {headers key} {
+proc obex::core::header::findall {headers key} {
     set values {}
     foreach {name val} $headers {
         if {[string equal -nocase $key $name]} {
@@ -367,7 +367,7 @@ proc obex::header::findall {headers key} {
 
 
 if {$::tcl_platform(byteOrder) eq "littleEndian"} {
-    proc obex::ToUnicodeBE {s} {
+    proc obex::core::ToUnicodeBE {s} {
         set be ""
         set le [encoding convertto unicode $s]
         set n [string length $le]
@@ -377,7 +377,7 @@ if {$::tcl_platform(byteOrder) eq "littleEndian"} {
         }
         return $be
     }
-    proc obex::FromUnicodeBE {be} {
+    proc obex::core::FromUnicodeBE {be} {
         set le ""
         set n [string length $be]
         for {set i 0} {$i < $n} {incr i 2} {
@@ -386,22 +386,22 @@ if {$::tcl_platform(byteOrder) eq "littleEndian"} {
         return [encoding convertfrom unicode $le]
     }
 } else {
-    proc obex::ToUnicodeBE {s} {
+    proc obex::core::ToUnicodeBE {s} {
         return [encoding convertto unicode $s]
     }
-    proc obex::FromUnicodeBE {be} {
+    proc obex::core::FromUnicodeBE {be} {
         return [encoding convertfrom unicode $be]
     }
 }
 
-proc obex::MakeBinUuid {uuid} {
+proc obex::core::MakeBinUuid {uuid} {
     if {![regexp {^[[:xdigit:]]{8}-([[:xdigit:]]{4}-){3}[[:xdigit:]]{12}$} $uuid]} {
        error "Invalid UUID."
     }
     return [binary decode hex [string map {- {}} $uuid]]
 }
 
-proc obex::request::OpName {op} {
+proc obex::core::request::OpName {op} {
     variable OpNames
     array set OpNames {
         0x80 connect
@@ -430,7 +430,7 @@ proc obex::request::OpName {op} {
     return [OpName $op]
 }
 
-proc obex::request::OpCode {op} {
+proc obex::core::request::OpCode {op} {
     variable OpCodes
     # Note OpCodes and OpNames are not symmetrical
     array set OpCodes {
@@ -460,7 +460,7 @@ proc obex::request::OpCode {op} {
     return [OpCode $op]
 }
 
-proc obex::response::StatusName {op} {
+proc obex::core::response::StatusName {op} {
     variable StatusNames
     # Hex -> name
     # Note 0x01 - 0x0f -> not defined in spec. Used by us internally.
@@ -517,7 +517,7 @@ proc obex::response::StatusName {op} {
     return [StatusName $op]
 }
 
-proc obex::response::StatusCode {name} {
+proc obex::core::response::StatusCode {name} {
     variable StatusNames
     variable StatusCodes
 
@@ -540,7 +540,7 @@ proc obex::response::StatusCode {name} {
     return [StatusCode $name]
 }
 
-proc obex::response::StatusCategory {status} {
+proc obex::core::response::StatusCategory {status} {
     set status [expr {$status & 0x7f}]
     if {$status < 0x10} {
         return protocolerror
@@ -559,7 +559,7 @@ proc obex::response::StatusCategory {status} {
     }
 }
 
-proc obex::header::Id {name} {
+proc obex::core::header::Id {name} {
     variable Ids
     # Initialize
     array set Ids {
@@ -590,7 +590,7 @@ proc obex::header::Id {name} {
     return [Id $name]
 }
 
-proc obex::header::Name {hid} {
+proc obex::core::header::Name {hid} {
     variable Names
 
     # Initialize Names
@@ -612,7 +612,7 @@ proc obex::header::Name {hid} {
     return [Name $hid]
 }
 
-oo::class create obex::Util::Helpers {
+oo::class create obex::Helper {
     variable state; # Should be defined in containing class
 
     method headers {name} {
@@ -774,7 +774,7 @@ oo::class create obex::Util::Helpers {
 
 oo::class create obex::Client {
 
-    mixin obex::Util::Helpers
+    mixin obex::Helper
 
     # The Obex protocol only allows one request at a time. Accordingly,
     # a Client can be in one of the following states:
@@ -800,7 +800,7 @@ oo::class create obex::Client {
     variable state
 
     constructor args {
-        namespace path [linsert [namespace path] end ::obex]
+        namespace path [linsert [namespace path] end ::obex ::obex::core]
         my reset
         if {[llength [self next]]} {
             next {*}$args
@@ -1232,7 +1232,7 @@ oo::class create obex::Client {
 }
 
 oo::class create obex::Server {
-    mixin obex::Util::Helpers
+    mixin obex::Helper
 
     # The Obex protocol only allows one request at a time. Accordingly,
     # a Server can be in one of the following states:
@@ -1254,7 +1254,7 @@ oo::class create obex::Server {
     variable state
 
     constructor args {
-        namespace path [linsert [namespace path] end ::obex]
+        namespace path [linsert [namespace path] end ::obex ::obex::core]
         my reset
         if {[llength [self next]]} {
             next {*}$args
@@ -1314,7 +1314,7 @@ oo::class create obex::Server {
         switch -exact -- $state(state) {
             IDLE -
             REQUEST { my RequestPhaseInput $data}
-            RESPOND { my RespondPhaseInput $data}
+            RESPOND { my ResponsePhaseInput $data}
             ERROR   { error "Method must not be called after an error without calling the reset method first."}
             default { error "Internal error: unknown state $state(state)"}
         }
