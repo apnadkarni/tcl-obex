@@ -16,6 +16,12 @@ namespace eval obex::core {
         return [incr id_counter]
     }
 
+    namespace eval packet {
+        namespace path [namespace parent]
+        namespace export length complete
+        namespace ensemble create
+    }
+
     namespace eval request {
         namespace path [namespace parent]
         namespace export encode decode encode_setpath
@@ -214,7 +220,7 @@ proc obex::core::response::DecodeConnect {packet outvar} {
     return 1
 }
 
-proc obex::packet_length {packet} {
+proc obex::core::packet::length {packet} {
     # Get the length of a packet.
     #  packet - an OBEX packet or the initial fragment of one with
     #           at least three bytes.
@@ -227,7 +233,7 @@ proc obex::packet_length {packet} {
     return $len
 }
 
-proc obex::packet_complete {packet} {
+proc obex::core::packet::complete {packet} {
     # Returns 1 if $packet is a complete Obex packet and 0 otherwise.
     #  packet - an OBEX packet or fragment.
     if {[binary scan $packet xSu -> len] != 1} {
@@ -576,7 +582,7 @@ proc obex::core::header::Id {name} {
         EndOfBody              0x49
         Who                    0x4A
         ConnectionId           0xCB
-        Parameters             0x4C
+        AppParameters          0x4C
         AuthChallenge          0x4D
         AuthResponse           0x4E
         CreatorId              0xCF
@@ -955,7 +961,7 @@ oo::class create obex::Client {
         #  headers - List of alternating header names and values.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in <Obex headers> and
+        # with the header is formatted as described in [::obex::OBEX Headers] and
         # that the supplied headers if any are acceptable in `connect` request.
         # The following headers are commonly used in connects:
         # `Target`, `Who`, `Count`, `Length` and `Description`.

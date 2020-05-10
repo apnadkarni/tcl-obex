@@ -4,18 +4,8 @@ package require ruff
 source [file join [file dirname [info script]] .. lib obex.tcl]
 
 namespace eval obex {
+
     variable _preamble {
-
-        ## Downloads
-
-        The extension may be downloaded from
-        <https://sourceforge.net/projects/magicsplat/files/obex/>.
-    }
-}
-
-namespace eval obex {
-
-    variable _ruff_preamble {
 
         The Object Exchange (OBEX) standard defines a protocol and application
         framework for transferring objects and related meta-information between
@@ -24,11 +14,27 @@ namespace eval obex {
         Originally designed for use over IrDA, it is now used over other
         transport protocols as well, in particular Bluetooth and TCP/IP.
 
-        The `obex` package implements the OBEX protocol. It can be loaded as
+        ## The `obex` package
+
+        The `obex` package implements the OBEX protocol. It
+        package may be downloaded from
+        <https://sourceforge.net/projects/magicsplat/files/obex/>.
+        After extracting into a directory listed in Tcl's `auto_path`,
+        it can be loaded as
 
             package require obex
 
         Only OBEX client functionality is implemented in this release.
+
+        The package is broken up into the following namespaces based on
+        [OBEX Profiles]:
+
+        [::obex] - Implements the *Generic Object Exchange Profile* on which
+                   the other profiles are based.
+        [::obex::opp]  - Implements the *Object Push Profile*.
+        [::obex::pbap] - Implements the *Phone Book Access Profile*.
+        [::obex::map]  - Implements the *Message Access Profile*.
+        [::obex::core] - Implements core low-level protocol commands.
 
         ## The OBEX Session protocol
 
@@ -40,7 +46,7 @@ namespace eval obex {
         that transport connection. Of course, independent requests may
         be in progress on separate transport connections.
 
-        ### Requests
+        ### OBEX Requests
 
         Each request is composed of multiple request packets based on the
         maximum packet size supported by the two ends of the OBEX conversation.
@@ -54,7 +60,7 @@ namespace eval obex {
         request is marked by a special *final* bit which indicates the request
         is complete.
 
-        #### Request opcodes
+        #### OBEX Request opcodes
 
         The following table shows the possible request operations that
         a client may initiate:
@@ -70,7 +76,7 @@ namespace eval obex {
         `session` - Used for reliable session support. Not supported by
                     the `obex` package.
 
-        ### Responses
+        ### OBEX Responses
 
         Like requests, responses may be broken up into multiple response
         packets. A response packet has a similar structure to request packets
@@ -78,7 +84,7 @@ namespace eval obex {
         to a request opcode. These response codes are analogous to HTTP
         status codes.
 
-        #### Response codes
+        #### OBEX Response codes
 
         The possible response codes are categorized into a response status which
         may be one of the following: `success`, `informational`, `redirect`,
@@ -111,9 +117,9 @@ namespace eval obex {
 
         A status of `protocolerror` includes the following response codes:
 
-        protocolerror    - Generated internally by the `obex`
-        package if a protocol error occured. It does not actually map
-        to a OBEX response.
+        protocolerror - Generated internally by the `obex` package
+                        if a protocol error occured. It does not actually map
+                        to a OBEX response.
 
         A status of `clienterror` indicates an error by the client in
         its request. It includes the following response codes:
@@ -150,9 +156,105 @@ namespace eval obex {
         databasefull                - Database full.
         databaselocked              - Database locked.
 
+        ### OBEX Headers
 
+        The actual object itself, and any related meta-information about it,
+        is transferred in OBEX packets as a sequence of *headers*. A header
+        consists of two parts:
+
+        * The *header identifier* which specifies both the type and the
+        semantics of the header.
+
+        * The *header value* whose format is fully defined by the header
+        identifier.
+
+        Header values may be a string, a binary (sequence of bytes),
+        a 8-bit value or a 32-bit value. When passing header values into
+        `obex` commands, the caller has to ensure the value is formatted
+        appropriately. For strings and integers, this is straightforward. For
+        byte sequences, caller must ensure the value is generated as a binary
+        using the `binary format` or `encoding convertto` commands, read
+        from a binary channel and so on.
+
+        The table below shows the header identifiers.
+
+        AppParameters - Byte sequence. Used by layered applications to include
+                        additional information in a request or response. The value
+                        is a byte sequence of (tag,length,value) triples where tag
+                        and length are one byte each. Tags and semantics are defined
+                        by the application.
+        AuthChallenge - Byte sequence. Authentication challenge.
+        AuthResponse  - Byte sequence. Authentication response.
+        Body          - Byte sequence. A chunk of the object content.
+        ConnectionId  - 32-bit. The connection id used when multiplexing multiple
+                        OBEX connections over one transport connection.
+        Count         - 32-bit. Number of objects involved in the operation.
+        CreatorId     - 32-bit. Unsigned integer that identifies creator of an object.
+        Description   - String. Describes the object or provides additional information
+                        about the operation, errors etc.
+        EndOfBody     - Byte sequence. The last chunk of the object content.
+        Http          - Byte sequence. This has the same format as HTTP 1.x headers
+                        and should be parsed as HTTP headers with the same semantics.
+        Length        - 32-bit. Length of object in bytes.
+        Name          - String. Name of the object, e.g. a file name.
+        ObjectClass   - Byte sequence. Similar in function to the `Type` header except
+                        the scope of the semantics are specific to the layered application.
+        SessionParameters     - Byte sequence. Parameters used in `session` commands.
+        SessionSequenceNumber - 8-bit. Used for sequencing packets in a session.
+        Target     - Byte sequence. Specifies the service that should process a request.
+                     Must be the first header in a request packet if present and
+                     cannot be used together with the `ConnectionId` header within
+                     a **request**.
+        Timestamp  - Byte sequence. Represents time of last modification of the object.
+                     This should be in ISO 8601 format as `YYYYMMDDTHHMMSS` for local
+                     time and `YYYYMMDDTHHMMSSZ` for UTC. Note this is a byte sequence
+                     and **not** a string.
+        Timestamp4 - 32-bit. Represents time of last modification as number of seconds
+                     since January 1, 1970.
+        Type       - Byte sequence. Describes the type of the object in the same manner as
+                     HTTP's `Content-Header` header. The value is a byte sequence of
+                     ASCII characters terminated by a null, **not** a string.
+        WanUuid    - Byte sequence. Only used in stateless networks environments where
+                     the OBEX server resides on network client with the OBEX client
+                     residing on the network server. The OBEX server (the network client)
+                     then includes this in all responses.
+        Who        - Byte sequence. Similar in purpose to the `Target` header except
+                     that while `Target` in a request identifies the desired service,
+                     `Who` in a response identifies the service generating the response.
+
+
+        ## OBEX Profiles
+
+        In order for two independently developed applications to exchange data,
+        they must agree on the objects and procedures used in the exchange. This
+        may include the selective use of headers, assigning semantics to
+        application-specific parameters as well as restricting the request types
+        that need to be supported. A *profile* is a collection of these
+        requirements for a specific application usage scenario. Two applications
+        adhering to the same profile are assured of interoperability.
+
+        As an example, consider the *Phone Book Access Profile (PBAP)* which
+        defines the protocols, objects and procedures for retrieving phone book
+        entries from a device. It defines the services that a PBAP server must
+        implement, how a PBAP client accesses these services, the format in
+        which address book entries are transferred and so on.
+
+        In the `obex` package, profiles are implemented within namespace that
+        reflect the profile name. For example, the client and server classes
+        for the *Object Push Profile (OPP)* are contained in the `::obex::opp`
+        namespace.
     }
+}
 
+namespace eval obex::core {
+    variable _ruff_preamble {
+        ## Dummy
+
+        The `obex::core` namespace contains the low level commands
+        implementing the OBEX protocol. Their use is not recommended
+        without detailed knowledge of the protocol. The classes and
+        commands in the other `obex` namespaces should be used instead.
+    }
 }
 
 proc obex::Document {outfile args} {
@@ -166,7 +268,7 @@ proc obex::Document {outfile args} {
     variable _preamble
 
     set ns [namespace current]
-    set namespaces [list $ns]
+    set namespaces [list $ns ${ns}::core]
     ruff::document $namespaces -autopunctuate 1 -excludeprocs {^[_A-Z]} \
         -excludeclasses [list ${ns}::Server] \
         -recurse 0 -preamble $_preamble -pagesplit namespace \
