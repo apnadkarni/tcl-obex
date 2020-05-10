@@ -407,9 +407,9 @@ proc obex::core::request::OpName {op} {
         0x80 connect
         0x81 disconnect
         0x02 put
-        0x82 putfinal
+        0x82 put
         0x03 get
-        0x83 getfinal
+        0x83 get
         0x85 setpath
         0x87 session
         0xff abort
@@ -437,9 +437,7 @@ proc obex::core::request::OpCode {op} {
         connect     0x80
         disconnect  0x81
         put         0x02
-        putfinal    0x82
         get         0x03
-        getfinal    0x83
         setpath     0x85
         session     0x87
         abort       0xff
@@ -554,6 +552,8 @@ proc obex::core::response::StatusCategory {status} {
         return clienterror
     } elseif {$status < 0x60} {
         return servererror
+    } elseif {$status < 0x70} {
+        return databaseerror
     } else {
         return unknown
     }
