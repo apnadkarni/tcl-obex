@@ -179,65 +179,77 @@ namespace eval obex {
         The table below shows the header identifiers.
 
         AppParameters - Byte sequence. Used by layered applications to include
-                        additional information in a request or response. The value
-                        is a byte sequence of (tag,length,value) triples where tag
-                        and length are one byte each. Tags and semantics are defined
-                        by the application.
+                        additional information in a request or response. The
+                        value is a byte sequence of (tag,length,value) triples
+                        where tag and length are one byte each. Tags and
+                        semantics are defined by the application.
+
         AuthChallenge - Byte sequence. Authentication challenge.
         AuthResponse  - Byte sequence. Authentication response.
         Body          - Byte sequence. A chunk of the object content.
         ConnectionId  - 32-bit. The connection id used when multiplexing multiple
                         OBEX connections over one transport connection.
         Count         - 32-bit. Number of objects involved in the operation.
-        CreatorId     - 32-bit. Unsigned integer that identifies creator of an object.
-        Description   - String. Describes the object or provides additional information
-                        about the operation, errors etc.
+        CreatorId     - 32-bit. Unsigned integer that identifies the creator
+                        of an object.
+        Description   - String. Describes the object or provides additional
+                        information about the operation, errors etc.
         EndOfBody     - Byte sequence. The last chunk of the object content.
-        Http          - Byte sequence. This has the same format as HTTP 1.x headers
-                        and should be parsed as HTTP headers with the same semantics.
+        Http          - Byte sequence. This has the same format as HTTP 1.x
+                        headers and should be parsed as HTTP headers with the
+                        same semantics.
         Length        - 32-bit. Length of object in bytes.
         Name          - String. Name of the object, e.g. a file name.
-        ObjectClass   - Byte sequence. Similar in function to the `Type` header except
-                        the scope of the semantics are specific to the layered application.
-        SessionParameters     - Byte sequence. Parameters used in `session` commands.
+        ObjectClass   - Byte sequence. Similar in function to the `Type` header
+                        except the scope of the semantics are specific to the
+                        layered application.
+        SessionParameters - Byte sequence. Parameters in `session` commands.
         SessionSequenceNumber - 8-bit. Used for sequencing packets in a session.
-        Target     - Byte sequence. Specifies the service that should process a request.
+        Target     - Byte sequence. Specifies the service to process a request.
                      Must be the first header in a request packet if present and
-                     cannot be used together with the `ConnectionId` header within
-                     a **request**.
-        Timestamp  - Byte sequence. Represents time of last modification of the object.
-                     This should be in ISO 8601 format as `YYYYMMDDTHHMMSS` for local
-                     time and `YYYYMMDDTHHMMSSZ` for UTC. Note this is a byte sequence
-                     and **not** a string.
-        Timestamp4 - 32-bit. Represents time of last modification as number of seconds
-                     since January 1, 1970.
-        Type       - Byte sequence. Describes the type of the object in the same manner as
-                     HTTP's `Content-Header` header. The value is a byte sequence of
-                     ASCII characters terminated by a null, **not** a string.
-        WanUuid    - Byte sequence. Only used in stateless networks environments where
-                     the OBEX server resides on network client with the OBEX client
-                     residing on the network server. The OBEX server (the network client)
-                     then includes this in all responses.
-        Who        - Byte sequence. Similar in purpose to the `Target` header except
-                     that while `Target` in a request identifies the desired service,
-                     `Who` in a response identifies the service generating the response.
-
+                     cannot be used together with the `ConnectionId` header
+                     within a **request**.
+        Timestamp  - Byte sequence. Represents time of last modification of the
+                     object. This should be in ISO 8601 format as
+                     `YYYYMMDDTHHMMSS` for local time and `YYYYMMDDTHHMMSSZ` for
+                     UTC. Note this is a byte sequence and **not** a string.
+        Timestamp4 - 32-bit. Represents time of last modification as number of
+                     seconds since January 1, 1970.
+        Type       - Byte sequence. Describes the type of the object in the same
+                     manner as HTTP's `Content-Header` header. The value is a
+                     byte sequence of ASCII characters terminated by a null,
+                     **not** a string.
+        WanUuid    - Byte sequence. Only used in stateless networks environments
+                     where the OBEX server resides on network client with the
+                     OBEX client residing on the network server. The OBEX server
+                     (the network client) then includes this in all responses.
+        Who        - Byte sequence. Similar to the `Target` header except
+                     that while `Target` in a request identifies the desired
+                     service, `Who` in a response identifies the service
+                     generating the response.
 
         ## OBEX Profiles
 
-        In order for two independently developed applications to exchange data,
-        they must agree on the objects and procedures used in the exchange. This
-        may include the selective use of headers, assigning semantics to
-        application-specific parameters as well as restricting the request types
-        that need to be supported. A *profile* is a collection of these
-        requirements for a specific application usage scenario. Two applications
-        adhering to the same profile are assured of interoperability.
+        A *profile* defines
 
-        As an example, consider the *Phone Book Access Profile (PBAP)* which
-        defines the protocols, objects and procedures for retrieving phone book
-        entries from a device. It defines the services that a PBAP server must
-        implement, how a PBAP client accesses these services, the format in
-        which address book entries are transferred and so on.
+        * An application usage scenario in terms of the functionality exposed
+        to the user.
+        * The requirements expected of the underlying protocol stacks to
+        ensure interoperability.
+        * The message formats and operations used to exchange
+        objects between application instances.
+
+        Two independently developed applications adhering to the same profile
+        are assured of interoperability.
+
+        As an example, consider the *Bluetooth Phone Book Access Profile
+        (PBAP)*. The usage scenario for the profile is retrieval of phone book
+        entries stored on a *server* device from a *client* device. The protocol
+        requirements include OBEX over RFCOMM over L2CAP as the transport with
+        SDP for service advertising. The operations include GET/PUT for
+        retrieval of the phone book as well as individual entries. Message
+        formats include use of specific OBEX headers and formats specific
+        to the content (e.g. v-card).
 
         In the `obex` package, profiles are implemented within namespace that
         reflect the profile name. For example, the client and server classes
