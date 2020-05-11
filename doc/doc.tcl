@@ -1,4 +1,5 @@
 # This file contains code to generate the documentation for the obex package.
+# Usage:   tclsh doc.tcl
 
 package require ruff
 source [file join [file dirname [info script]] .. lib obex.tcl]
@@ -258,14 +259,21 @@ namespace eval obex {
     }
 }
 
+namespace eval obex {
+    variable _ruff_preamble {
+        
+        The `obex` namespace 
+    }
+}
+
 namespace eval obex::core {
     variable _ruff_preamble {
-        ## Dummy
 
         The `obex::core` namespace contains the low level commands
         implementing the OBEX protocol. Their use is not recommended
         without detailed knowledge of the protocol. The classes and
         commands in the other `obex` namespaces should be used instead.
+
     }
 }
 

@@ -898,9 +898,6 @@ oo::class create obex::Client {
         # For multipart responses, collect headers
         lappend state(headers_in) {*}[dict get $response Headers]
 
-        # Assume we are now free for more requests
-        set state(state) IDLE
-
         # Do request-specific processing
         return [switch -exact -- $state(op) {
             connect    { my ConnectResponseHandler }
@@ -914,6 +911,26 @@ oo::class create obex::Client {
                 error "Unexpected request opcode $state(op)."
             }
         }]
+    }
+
+    method state {} {
+        # Returns the state of the client.
+        #
+        # The returned state is in the form of a dictionary with the following
+        # elements:
+        #   State - Client state; one of `IDLE`, `BUSY` or `ERROR`
+        #   Connected - 0/1 depending on whether connected or not.
+        #   ConnectionId - The connection id. Only present if connected.
+        #   MaxPacketLength - Maximum packet length negotiated.
+
+        set l [list State $state(state) \
+                   MaxPacketLength $state(max_packet_len)]
+        if {[info exists state(connection_id)]} {
+            lappend l Connected 1 ConnectionId $state(connection_id)
+        } else {
+            lappend l Connected 0
+        }
+        return $l
     }
 
     method get_response {} {
@@ -1451,6 +1468,26 @@ oo::class create obex::Server {
         } else {
             return [list done $packet]
         }
+    }
+
+    method state {} {
+        # Returns the state of the server.
+        #
+        # The returned state is in the form of a dictionary with the following
+        # elements:
+        #   State - Server state; one of `IDLE`, `REQUEST`, `RESPOND` or `ERROR`
+        #   Connected - 0/1 depending on whether connected or not.
+        #   ConnectionId - The connection id. Only present if connected.
+        #   MaxPacketLength - Maximum packet length negotiated.
+
+        set l [list State $state(state) \
+                   MaxPacketLength $state(max_packet_len)]
+        if {[info exists state(connection_id)]} {
+            lappend l Connected 1 ConnectionId $state(connection_id)
+        } else {
+            lappend l Connected 0
+        }
+        return $l
     }
 
     method reset {} {
