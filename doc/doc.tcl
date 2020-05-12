@@ -272,7 +272,31 @@ namespace eval obex {
         [Client] - Implements GOEP client functionality.
         [Server] - Implements GOEP server functionality.
 
-        ## Data transfer model
+        ## OBEX operation
+
+        An OBEX operation consists of the client making one of the
+        requests in the table below by calling the method of the same name.
+        This is the request phase during which multiple packets may be
+        exchanged with the server. The exchange then enters the response
+        phase in which the server responds to the request via another
+        multiple packet exchange. A single request may be in progress
+        on a single transport connection at a time.
+
+        `connect` - Initiate a conversation and establish context.
+        `disconnect` - Terminate a conversation.
+        `put`     - Send an object to the server.
+        `get`     - Retrieve an object from the server.
+        `setpath` - Sets the object directory location on the server.
+        `session` - Used for reliable session support over unreliable
+                    transports. Not supported by the `obex` package.
+
+        The normal mode of operation consists of a sequence of requests
+        starting with a `connect`, ending with a `disconnect`, and one or
+        more of the other requests in between. Note that the `connect` and
+        `disconnect` are optional for some some servers which will accept
+        the `put` and `get` requests without a preceding `connect`.
+
+        ## Packet transfer model
 
         The [OBEX session protocol](obex.html#The_OBEX_Session_protocol) allows
         for one request at a time. This one request may result in multiple
@@ -299,11 +323,15 @@ namespace eval obex {
             lassign [client input $reply]
         }
         if {$step eq "done"} {
-            # Succeeded
-            ...Proceed with next request...
+            # Operation completed. Check if successful.
+            if {[client status] eq "success"} {
+                ... handle success ...
+            } else {
+                ... handle error ...
+            }
         } else {
-            # assert $step == "failed"
-            ...Error or failure handling...
+            # assert $step == "failed". Operation could not be completed.
+            ... Handle bad news ...
         }
         ````
 
@@ -314,22 +342,133 @@ namespace eval obex {
         to the server. The application then sends data, if any, to the
         server. Then if the step value was `continue`, application needs
         to read additional data and feed whatever it gets (at least one byte)
-        to the [Client::input] method. This step is repeated as long
+        to the [Client.input] method. This step is repeated as long
         as the `input` method returns `continue`. At any state, a method
         may return `done` indicating all communication is over and the
-        request completed successfully or `failed` indicated the request
-        completed with a failure.
+        request completed or `failed` indicated the request could not
+        be completed. **Note that `done` only indicates the operation
+        was completed, not that it was successful.** More on this in
+        [Checking request status].
 
         The above illustrates the conceptual model but of course the application
         may choose to do the equivalent non-sequentially via the event loop and
         non-blocking I/O.
 
+        ### Checking request completion status
+
+        The completion of a request is indicated by a return value of
+        `done` or `failed` from the operation methods.
+
+        The value `failed` indicates a complete response was not received from
+        the server. The cause may be protocol version incompatibility, protocol
+        errors, loss of connectivity and so on. 
+
+        The value `done` indicates a full and valid response was received from
+        the server. However, this does not mean that the request itself was
+        successful as the server response may indicate failure or some
+        other status. This status can be checked with the [Client.status]
+        method which returns one of the following values:
+        `success`, `informational`, `redirect`,
+        `clienterror`, `servererror`, `databaseerror` or `protocolerror`.
+
+        A status of `success` includes the following response codes:
+
+        ok               - Success.
+        created          - Object was created.
+        accepted         - Request accepted.
+        nonauthoritative - Non-authoritative information.
+        nocontent        - No content.
+        resetcontent     - Reset content.
+        partialcontent   - Partial content.
+
+        A status of `informational` includes the following response codes:
+
+        continue         - Client should send next packet in the request.
+
+        A status of `redirect` includes the following response codes and
+        indicates the resource or object is available elsewhere or by
+        some other means.
+
+        multiplechoices  - Multiple choices.
+        movedpermanently - Moved permanently.
+        movedtemporarily - Moved temporarily.
+        seeother         - See other.
+        notmodified      - Not modified.
+        useproxy         - Use proxy.
+
+        A status of `protocolerror` includes the following response codes:
+
+        protocolerror - Generated internally by the `obex` package
+                        if a protocol error occured. It does not actually map
+                        to a OBEX response.
+
+        A status of `clienterror` indicates an error by the client in
+        its request. It includes the following response codes:
+
+        badrequest       - Bad request. Server could not understand request.
+        unauthorized     - Unauthorized.
+        paymentrequired  - Payment required.
+        forbidden        - Forbidden. Request understood but denied.
+        notfound         - Not found.
+        methodnotallowed - Method not allowed.
+        notacceptable    - Request not acceptable.
+        proxyauthenticationrequired - Proxy authentication required.
+        requesttimeout              - Request timed out.
+        conflict                    - Conflict.
+        gone                        - Gone.
+        lengthrequired              - Length required.
+        preconditionfailed          - Precondition failed.
+        requestedentitytoolarge     - Requested entity too large.
+        requesturltoolarge          - Request URL too large.
+        unsupportedmediatype        - Unsupported media.
+
+        A status of `servererror` indicates an error on the server in
+        responding to a request and includes the following response codes:
+
+        internalservererror         - Internal server error.
+        notimplemented              - Not implemented.
+        badgateway                  - Bad gateway.
+        serviceunavailable          - Service unavailable.
+        gatewaytimeout              - Gateway timed out.
+        httpversionnotsupported     - Version not supported.
+
+        A status of `databaseerror` includes the following response codes:
+
+        databasefull                - Database full.
+        databaselocked              - Database locked.
+
 
         ### Synchronous completion
 
+        As a convenience most suitable for interactive use, the
+        [Client.await] method can be used instead of the above idiom
+        to synchronously wait for a request to complete. The equivalent
+        of the above example would be
+
+        ````
+        set status [client await $chan [client connect]]
+        if {$status eq "done"} {
+            ...
+        } else {
+            ...
+        }
+
+        ````
+
+        This runs the "continue" loop shown previously internally until the
+        request succeeds or fails. The disadvantage of this method is that it
+        will block the event loop until completion and offers no protection
+        against timeouts, a non-responsive server and other such errors.
+
         ### Channel configuration
 
-        ## OBEX operations
+        OBEX is a binary protocol. Any channels used to pass data should
+        therefore be configured to be in binary mode. Moreover, because
+        OBEX packets are small and never have more than one outstanding,
+        buffering should be turned off.
+
+            chan configure $chan -translation binary -buffering none
+
 
         ### Generating responses
 
