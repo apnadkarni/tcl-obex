@@ -261,8 +261,80 @@ namespace eval obex {
 
 namespace eval obex {
     variable _ruff_preamble {
-        
-        The `obex` namespace 
+
+        The `obex` namespace contains the [Client] and [Server] classes which
+        implement the `Generic Object Exchange Profile (GOEP)` on which all
+        other OBEX profiles are based. These classes may be used to access or
+        provide any OBEX based service but require the application to have more
+        knowledge of the profile with which that service is compliant. The
+        profile-specific classes are easier to use in that regard.
+
+        [Client] - Implements GOEP client functionality.
+        [Server] - Implements GOEP server functionality.
+
+        ## Data transfer model
+
+        The [OBEX session protocol](obex.html#The_OBEX_Session_protocol) allows
+        for one request at a time. This one request may result in multiple
+        packets in both directions that need to be processed for the request to
+        be completed. Rather than carrying out this communications itself,
+        the [Client] and [Server] objects depend on the application itself
+        to do the actual packet transfer. This makes the implementation
+        independent of the channels, whether synchronous or event-driven
+        I/O is used and so on. For all it knows, the data is transferred
+        by encapsulating in E-mail.
+
+        ### Generating requests
+
+        From the client side, a request to connect looks as below:
+
+        ````
+        obex::Client create Client
+        lassign [client connect] step data
+        while {$step eq "continue"} {
+            if {[string length $data]} {
+                ...send $data to server...
+            }
+            set reply [...get data from server..]
+            lassign [client input $reply]
+        }
+        if {$step eq "done"} {
+            # Succeeded
+            ...Proceed with next request...
+        } else {
+            # assert $step == "failed"
+            ...Error or failure handling...
+        }
+        ````
+
+        Although this fragment used the `connect` operation, the model
+        is exactly the same for other operations such as `get`, `put` etc.
+        All the methods that implement these operations return a pair
+        consisting of the next step to take and optionally data to send
+        to the server. The application then sends data, if any, to the
+        server. Then if the step value was `continue`, application needs
+        to read additional data and feed whatever it gets (at least one byte)
+        to the [Client::input] method. This step is repeated as long
+        as the `input` method returns `continue`. At any state, a method
+        may return `done` indicating all communication is over and the
+        request completed successfully or `failed` indicated the request
+        completed with a failure.
+
+        The above illustrates the conceptual model but of course the application
+        may choose to do the equivalent non-sequentially via the event loop and
+        non-blocking I/O.
+
+
+        ### Synchronous completion
+
+        ### Channel configuration
+
+        ## OBEX operations
+
+        ### Generating responses
+
+        [TBD]
+
     }
 }
 
