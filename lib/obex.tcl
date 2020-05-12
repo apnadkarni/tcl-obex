@@ -187,7 +187,6 @@ proc obex::core::response::DecodeConnect {packet outvar} {
     #
     # The dictionary returned by the command has the following keys:
     #  Length       - Length of packet.
-    #  ErrorMessage - If set, a human-readable error message.
     #  Final        - 1/0 depending on whether the `final` bit was set
     #                 in the response operation code or not.
     #  Flags        - Currently always 0.
@@ -227,7 +226,7 @@ proc obex::core::packet::length {packet} {
     # Returns the packet length as encoded in its header or 0 if the passed
     # fragment is too short to contain a length field.
 
-    if {[binary scan $packet xSu -> len] != 1} {
+    if {[binary scan $packet xSu len] != 1} {
         return 0
     }
     return $len
@@ -772,8 +771,13 @@ oo::class create obex::Helper {
         }
     }
 
-    method RaiseError {message} {
+    method SetErrorStatus {message} {
         set state(state) ERROR
+        set state(error_message) $message
+    }
+
+    method RaiseError {message} {
+        my SetErrorStatus $message
         return -level 1 -code error $message
     }
 }
@@ -848,14 +852,14 @@ oo::class create obex::Client {
         # The method takes as input data received from the server as part of
         # the response to a request. The return value from the method is a list
         # of one or two elements. The first element is one of the following:
-        #   `done`   - The full response has been received. The application
+        #   `done`       - The full response has been received. The application
         #                  can then call any of the retrieval methods or initiate
         #                  another request. If the second element is present and
         #                  and not empty, it is data to be sent to the server.
         #                  The application can call other methods to retrieve
         #                  the result of the request. The application may also
         #                  call methods to initiate the next request.
-        #   `continue` - The response has only been partially received. If
+        #   `continue`   - The response has only been partially received. If
         #                  the second element is present and not empty, it is
         #                  data to be sent to the server. In either case, the
         #                  application should read more data from the server
@@ -922,6 +926,7 @@ oo::class create obex::Client {
         #   Connected - 0/1 depending on whether connected or not.
         #   ConnectionId - The connection id. Only present if connected.
         #   MaxPacketLength - Maximum packet length negotiated.
+        #   ErrorMessage - If present, the last error seen.
 
         set l [list State $state(state) \
                    MaxPacketLength $state(max_packet_len)]
@@ -930,6 +935,10 @@ oo::class create obex::Client {
         } else {
             lappend l Connected 0
         }
+        if {[info exists state(error_message)]} {
+            lappend l ErrorMessage $state(error_message)
+        }
+
         return $l
     }
 
@@ -966,8 +975,8 @@ oo::class create obex::Client {
             lappend status Status $Status \
                 StatusCode $StatusCode \
                 StatusName [response::StatusName $StatusCode]
-            if {[info exists ErrorMessage]} {
-                lappend status ErrorMessage $ErrorMessage
+            if {[info exists state(error_message)]} {
+                lappend status ErrorMessage $state(error_message)
             }
         }
         return $status
@@ -1178,6 +1187,69 @@ oo::class create obex::Client {
             my RaiseError "Headers too long for abort request."
         }
         return [list continue $packet]
+    }
+
+    method await {chan action_state} {
+        # Synchronously completes an ongoing operation.
+        #  chan - A Tcl channel for communicating with the server. This
+        #    must not be multiplexed with other requests.
+        #  action_state - The return value from a method that returns
+        #    and action state such as [connect], [disconnect], [get],
+        #    [put], [setpath], [abort] or [input].
+        #
+        # The method places the passed channel into binary blocking mode and
+        # uses it to communicate with the server to complete all remaining
+        # steps required for the operation to complete. The original modes are
+        # restored before returning.
+        #
+        # Returns `done` if the operation completed successfully and
+        # `failed` otherwise.
+
+        set chan_config [chan configure $chan]
+        try {
+            chan configure $chan -blocking 1 -buffering none \
+                -translation binary
+            lassign $action_state action data
+            while {1} {
+                if {[string length $data]} {
+                    # What if error? TBD
+                    puts -nonewline $chan $data
+                }
+                if {$action ne "continue"} {
+                    return $action
+                }
+                # Read the entire next packet.
+                set packet [read $chan 3]
+                if {[string length $packet] < 3} {
+                    SetErrorStatus "Trucated read. Connection brken?"
+                    return failed
+                }
+                set packet_length [packet length $packet]
+                if {$packet_length > 3} {
+                    # Read rest of packet
+                    set rest_len [expr {$packet_length - 3}]
+                    set rest [read $chan $rest_len]
+                    if {[string length $rest] < $rest_len} {
+                        SetErrorStatus "Trucated read. Connection brken?"
+                        return failed
+                    }
+                    append packet $rest
+                }
+                lassign [my input $packet] action data
+                # Loop back
+            }
+        } finally {
+            # Restore original config. Note -encoding and -eofchar
+            # need explicitly set as -translation binary above
+            # changes them but not changed back by -translation below.
+            chan configure $chan \
+                -blocking [dict get $chan_config -blocking] \
+                -buffering [dict get $chan_config -buffering] \
+                -encoding [dict get $chan_config -encoding] \
+                -translation [dict get $chan_config -translation] \
+                -eofchar [dict get $chan_config -eofchar]
+        }
+        
     }
 
     method AbortResponseHandler {} {
@@ -1479,6 +1551,7 @@ oo::class create obex::Server {
         #   Connected - 0/1 depending on whether connected or not.
         #   ConnectionId - The connection id. Only present if connected.
         #   MaxPacketLength - Maximum packet length negotiated.
+        #   ErrorMessage - If present, the last error seen.
 
         set l [list State $state(state) \
                    MaxPacketLength $state(max_packet_len)]
@@ -1486,6 +1559,9 @@ oo::class create obex::Server {
             lappend l Connected 1 ConnectionId $state(connection_id)
         } else {
             lappend l Connected 0
+        }
+        if {[info exists state(error_message)]} {
+            lappend l ErrorMessage $state(error_message)
         }
         return $l
     }
