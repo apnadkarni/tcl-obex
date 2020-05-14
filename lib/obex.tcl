@@ -475,7 +475,6 @@ proc obex::core::response::ResponseCodeName {op} {
     # Hex -> name
     # Note 0x01 - 0x0f -> not defined in spec. Used by us internally.
     array set ResponseCodeNames {
-        0x01 protocolerror
         0x10 continue
         0x20 ok
         0x21 created
@@ -514,6 +513,7 @@ proc obex::core::response::ResponseCodeName {op} {
         0x55 httpversionnotsupported
         0x60 databasefull
         0x61 databaselocked
+        0x7f protocolerror
     }
     proc ResponseCodeName {op} {
         variable ResponseCodeNames
@@ -1030,7 +1030,7 @@ oo::class create obex::Client {
         # The returned value is one of
         # `success`, `informational`, `redirect`,
         # `clienterror`, `servererror`, `databaseerror` or `protocolerror`.
-        # See [obex::Request completion status].
+        # See [::obex::Request completion status].
         #
         # The command will raise an error if no response has been received
         # for any request.
@@ -1042,10 +1042,13 @@ oo::class create obex::Client {
         #
         # The returned dictionary has the following keys:
         #  ResponseStatus   - The generic status category.
-        #  ResponseCode     - The numeric response status code from server.
+        #  ResponseCode     - The numeric response code from server.
         #  ResponseCodeName - Mnemonic form of `ResponseCode`
         #  ErrorMessage     - Additional human readable error status message. This
         #                     key may not be present.
+        #
+        # For more information on values for the above keys, see
+        # [::obex::Request completion status].
         #
         # The command will raise an error if no response has been received
         # for any request.
@@ -1065,7 +1068,7 @@ oo::class create obex::Client {
         #  headers - List of alternating header names and values.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in [::obex::OBEX Headers] and
+        # with the header is formatted as described in [OBEX Headers] and
         # that the supplied headers if any are acceptable in `connect` request.
         # The following headers are commonly used in connects:
         # `Target`, `Who`, `Count`, `Length` and `Description`.
