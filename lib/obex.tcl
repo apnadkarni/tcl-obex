@@ -785,10 +785,6 @@ oo::class create obex::Helper {
         set state(error_message) $message
     }
 
-    method RaiseError {message} {
-        my SetErrorStatus $message
-        return -level 1 -code error $message
-    }
 }
 
 oo::class create obex::Client {
@@ -954,38 +950,10 @@ oo::class create obex::Client {
         # `failed` otherwise.
 
         set chan_config [chan configure $chan]
+        chan configure $chan -blocking 1 -buffering none \
+            -translation binary
         try {
-            chan configure $chan -blocking 1 -buffering none \
-                -translation binary
-            lassign $action_state action data
-            while {1} {
-                if {[string length $data]} {
-                    # What if error? TBD
-                    puts -nonewline $chan $data
-                }
-                if {$action ne "continue"} {
-                    return $action
-                }
-                # Read the entire next packet.
-                set packet [read $chan 3]
-                if {[string length $packet] < 3} {
-                    SetErrorStatus "Trucated read. Connection brken?"
-                    return failed
-                }
-                set packet_length [packet length $packet]
-                if {$packet_length > 3} {
-                    # Read rest of packet
-                    set rest_len [expr {$packet_length - 3}]
-                    set rest [read $chan $rest_len]
-                    if {[string length $rest] < $rest_len} {
-                        SetErrorStatus "Trucated read. Connection brken?"
-                        return failed
-                    }
-                    append packet $rest
-                }
-                lassign [my input $packet] action data
-                # Loop back
-            }
+            return [my Await $chan $action_state]
         } finally {
             # Restore original config. Note -encoding and -eofchar
             # need explicitly set as -translation binary above
@@ -997,6 +965,45 @@ oo::class create obex::Client {
                 -translation [dict get $chan_config -translation] \
                 -eofchar [dict get $chan_config -eofchar]
         }
+    }
+
+    method Await {chan action_state} {
+        # Helper method for await.
+        #
+        # Implements the core of the [await] method but expects caller to
+        # have configured the channel to be blocking, binary, unbuffered
+        # and arranged to have the original configuration restored even
+        # on error.
+        lassign $action_state action data
+        while {1} {
+            if {[string length $data]} {
+                # What if error? TBD
+                puts -nonewline $chan $data
+            }
+            if {$action ne "continue"} {
+                return $action
+            }
+            # Read the entire next packet.
+            set packet [read $chan 3]
+            if {[string length $packet] < 3} {
+                SetErrorStatus "Trucated read. Connection brken?"
+                return failed
+            }
+            set packet_length [packet length $packet]
+            if {$packet_length > 3} {
+                # Read rest of packet
+                set rest_len [expr {$packet_length - 3}]
+                set rest [read $chan $rest_len]
+                if {[string length $rest] < $rest_len} {
+                    SetErrorStatus "Trucated read. Connection brken?"
+                    return failed
+                }
+                append packet $rest
+            }
+            lassign [my input $packet] action data
+            # Loop back
+        }
+
     }
 
     method state {} {
@@ -1219,7 +1226,7 @@ oo::class create obex::Client {
         #   appropriately based on the `Type` header, `Http` or `ObjectClass`
         #   headers passed in the initial call to `put_stream`.
         #   If none of these are present,
-        #   the server may interpret $content in any
+        #   the server may interpret content in any
         #   manner it chooses, possibly looking at the `Name` header if present,
         #   some default handling or even rejecting the request.
         #  headers - List of alternating header names and values. Should
@@ -1250,8 +1257,12 @@ oo::class create obex::Client {
         # that the supplied headers if any are acceptable in `put` request.
         # The following headers are commonly used in put operations:
         # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
-        # The headers `Body`, `EndOfBody`, `Length` and `ConnectionId`
+        # The headers `Body`, `EndOfBody`, and `ConnectionId`
         # are automatically generated and should not be passed in.
+        # This method does not automatically add a `Length` header since
+        # the length is not known a priori. However, some server implementations
+        # require the `Length` header and therefore should be passed in
+        # as part of $headers in such cases.
         #
         # Returns a list of one or two elements, the first of which is either
         # `continue` or `failed`, and the second, if present, is data to be sent
@@ -1265,7 +1276,8 @@ oo::class create obex::Client {
             }
         }
         if {[string length $chunk] != 0} {
-            lappend headers Length [string length $content] {*}[my SplitContent $content]
+            # Note no Length header as unknown!
+            lappend headers {*}[my SplitContent $chunk]
             set state(streaming) 1
         } else {
             lappend headers EndOfBody {}
@@ -1418,6 +1430,20 @@ oo::class create obex::Client {
         set state(state) BUSY
     }
 
+    method RaiseError {message} {
+        my SetErrorStatus $message
+        set status_detail [my status_detail]
+        if {[dict exists $status_detail ErrorMessage]} {
+            set detail [dict get $status_detail ErrorMessage]
+            if {$detail ne $message} {
+                append message " " [dict get $status_detail ErrorMessage]
+            }
+        } else {
+            dict set status_detail ErrorMessage $message
+        }
+        return -level 1 -code error $message \
+            -errorcode [list OBEX CLIENT $status_detail]
+    }
 }
 
 oo::class create obex::Server {
@@ -1684,6 +1710,13 @@ oo::class create obex::Server {
         set state(headers_in) {}
     }
 
+    method RaiseError {message} {
+        # TBD - provide some detail as in status_detail for client
+        my SetErrorStatus $message
+        return -level 1 -code error $message \ 
+            -errorcode [list OBEX CLIENT $message]
+    }
 }
 
+source [file join [file dirname [info script]] opp.tcl]
 package provide obex 0.1
