@@ -688,7 +688,9 @@ oo::class create obex::Helper {
                 set op 0x90;    # "continue" op
             }
         } else {
-            if {[llength $state(headers_out)] == 0} {
+            # If there are not more headers, set the final bit except in case of
+            # streaming requests where data is passed in chunks.
+            if {[llength $state(headers_out)] == 0 && ! $state(streaming)} {
                 set op [expr {$op | 0x80}]; # FINAL bit
             }
         }
@@ -797,12 +799,14 @@ oo::class create obex::Client {
     # a Client can be in one of the following states:
     #  IDLE - no request is outstanding.
     #  BUSY - a request is outstanding. state(request) indicates the request type.
+    #  STREAMING - a request is still in progress, but server has responded
+    #   and more data from application is awaited.
     #  ERROR - an error occurred on the conversation. Any request except abort
     #   will raise an exception.
     #
     # The state array contains the following keys:
     # Per connection:
-    #  state - IDLE, BUSY, ERROR
+    #  state - IDLE, BUSY, STREAMING, ERROR
     #  max_packet_len - max negotiated length of packet
     #  connection_id - ConnectionId as sent by remote. May not be present.
     #  connection_header - Binary connection header corresponding to $connection_id
@@ -814,6 +818,7 @@ oo::class create obex::Client {
     #  headers_out - headers to send in current request in encoded binary form
     #  response - latest response
     #  headers_in - accumulated headers received in responses to request
+    #  streaming - is a streaming request where content is provided piecemeal
     variable state
 
     constructor args {
@@ -872,15 +877,23 @@ oo::class create obex::Client {
         #                  application should read more data from the server
         #                  and invoke the `input` method again passing it the
         #                  read data.
-        #   `failed`     - The request has failed. See <Error handling> for
-        #                  dealing with errors and failures. If
+        #   `writable`   - This value is only returned if the current operation
+        #                  was a streaming `put` operation initiated with
+        #                  [put_stream]. It indicates that [put_stream] should
+        #                  be called again to send the next chunk of data.
+        #   `failed`     - The request failed. See [Request completion status]
+        #                  for dealing with errors and failures. If
         #                  the second element is present and not empty, it is
         #                  data to be sent to the server. In either case, the
-        #                  application must not invoke additional requests without
-        #                  first calling the <reset> method.
+        #                  application must not invoke additional requests
+        #                  without first calling the [reset] method.
         #
         # This method will raise an exception if no request is currently
         # outstanding.
+        #
+        # Returns a list of one or two elements, the first being one of
+        # `done`, `failed`, `continue` or `writable` and the second optional
+        # element being data to send to the server.
 
         my AssertState BUSY
 
@@ -929,8 +942,8 @@ oo::class create obex::Client {
         #  chan - A Tcl channel for communicating with the server. This
         #    must not be multiplexed with other requests.
         #  action_state - The return value from a method that returns
-        #    and action state such as [connect], [disconnect], [get],
-        #    [put], [setpath], [abort] or [input].
+        #    an action state such as [connect], [disconnect], [get],
+        #    [put], [put_delete], [put_stream], [setpath], [abort] or [input].
         #
         # The method places the passed channel into binary blocking mode and
         # uses it to communicate with the server to complete all remaining
@@ -1068,10 +1081,18 @@ oo::class create obex::Client {
         #  headers - List of alternating header names and values.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in [OBEX Headers] and
+        # with the header is formatted as described in [OBEX headers] and
         # that the supplied headers if any are acceptable in `connect` request.
         # The following headers are commonly used in connects:
         # `Target`, `Who`, `Count`, `Length` and `Description`.
+        #
+        # The method should not be called multiple times without an
+        # intervening call to [disconnect].
+        #
+        # Returns a list of one or two elements, the first of which is either
+        # `continue` or `failed`, and the second, if present, is data to be sent
+        # to the server. See [input] for details.
+
         if {[info exists state(connection_id)]} {
             error "Already connected."
         }
@@ -1114,10 +1135,14 @@ oo::class create obex::Client {
         #  headers - List of alternating header names and values.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in <Obex headers> and
+        # with the header is formatted as described in [OBEX headers] and
         # that the supplied headers if valid for `disconnect` requests.
         # The `ConnectionId` header is automatically generated as needed
         # and shoould not be included by the caller.
+        #
+        # Returns a list of one or two elements, the first of which is either
+        # `continue` or `failed`, and the second, if present, is data to be sent
+        # to the server. See [input] for details.
         if {![info exists state(connection_id)]} {
             error "Not connected."
         }
@@ -1143,12 +1168,16 @@ oo::class create obex::Client {
         #  headers - List of alternating header names and values.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in <Obex headers> and
+        # with the header is formatted as described in [OBEX headers] and
         # that the supplied headers if any are acceptable in `put` request.
         # The following headers are commonly used in put operations:
         # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
         # The headers `Body`, `EndOfBody`, `Length` and `ConnectionId`
         # are automatically generated and should not be passed in.
+        #
+        # Returns a list of one or two elements, the first of which is either
+        # `continue` or `failed`, and the second, if present, is data to be sent
+        # to the server. See [input] for details.
 
         # TBD - maybe break up content into body headers assuming body space
         #  is packet size - packet header - connection id header. That would
@@ -1165,7 +1194,7 @@ oo::class create obex::Client {
         #  headers - List of alternating header names and values.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in <Obex headers> and
+        # with the header is formatted as described in [OBEX headers] and
         # that the supplied headers if any are acceptable in `put` request.
         # The following headers are commonly used in put operations:
         # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
@@ -1173,9 +1202,79 @@ oo::class create obex::Client {
         # in a delete operation and should not be passed in. Moreover,
         # `ConnectionId` header is automatically generated and should not
         # be passed in.
+        #
+        # Returns a list of one or two elements, the first of which is either
+        # `continue` or `failed`, and the second, if present, is data to be sent
+        # to the server. See [input] for details.
 
         my BeginRequest put
         set state(headers_out) [header encoden $headers]
+        return [list continue [my OutgoingPacket 0x02 0]]
+    }
+
+    method put_stream {chunk {headers {}}} {
+        # Generates a Obex `PUT` request with content provided in chunks.
+        #  chunk - A content chunk to be sent. An empty string indicates end
+        #   of the stream. This must be formatted
+        #   appropriately based on the `Type` header, `Http` or `ObjectClass`
+        #   headers passed in the initial call to `put_stream`.
+        #   If none of these are present,
+        #   the server may interpret $content in any
+        #   manner it chooses, possibly looking at the `Name` header if present,
+        #   some default handling or even rejecting the request.
+        #  headers - List of alternating header names and values. Should
+        #   be empty on all calls except the first.
+        #
+        # This is similar to the [put] method except that it permits the
+        # caller to present the data to be sent in chunks instead of all at
+        # once. The application provides each chunk of the content in repeated
+        # calls to `put_stream`.
+        # This is more memory-efficient for large files. Only the first
+        # call initiating the `PUT` operation may specify headers. Passing
+        # an empty string indicates end of the content.
+        #
+        # Streaming operation is achieved through the following sequence of
+        # calls:
+        #
+        #  * Streaming is initiated through a call to `put_stream` which
+        #    normally returns `continue` with data to send to the server.
+        #  * The [input] method is called with the response from the server.
+        #    This returns `writable` indicating more data can be sent. The
+        #    application then calls `put_stream` again with the next chunk.
+        #  * This `input`, `put_stream` sequence is repeated until there
+        #    is no more data to send at which time the application should
+        #    call `put_stream` with an empty chunk.
+        # 
+        # It is the caller's responsibility to ensure the value associated
+        # with the header is formatted as described in [OBEX headers] and
+        # that the supplied headers if any are acceptable in `put` request.
+        # The following headers are commonly used in put operations:
+        # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
+        # The headers `Body`, `EndOfBody`, `Length` and `ConnectionId`
+        # are automatically generated and should not be passed in.
+        #
+        # Returns a list of one or two elements, the first of which is either
+        # `continue` or `failed`, and the second, if present, is data to be sent
+        # to the server. See [input] for details.
+        if {$state(state) eq "IDLE"} {
+            my BeginRequest put
+        } else {
+            my AssertState STREAMING
+            if {[llength $headers] != 0} {
+                my RaiseError "Headers only allowed in first chunk of a data stream."
+            }
+        }
+        if {[string length $chunk] != 0} {
+            lappend headers Length [string length $content] {*}[my SplitContent $content]
+            set state(streaming) 1
+        } else {
+            lappend headers EndOfBody {}
+            set state(streaming) 0
+            # TBD - do we need to guard against more put_stream calls
+            # after EndOfBody is sent?
+        }
+        set state(headers_out) [header encoden $headers]
+        set state(state) BUSY
         return [list continue [my OutgoingPacket 0x02 0]]
     }
 
@@ -1184,10 +1283,14 @@ oo::class create obex::Client {
         #  headers - List of alternating header names and values.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in <Obex headers> and
+        # with the header is formatted as described in [OBEX headers] and
         # that the supplied headers if any are acceptable in `put` request.
         # The following headers are commonly used in put operations:
         # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
+        #
+        # Returns a list of one or two elements, the first of which is either
+        # `continue` or `failed`, and the second, if present, is data to be sent
+        # to the server. See [input] for details.
 
         my BeginRequest get
         set state(headers_out) [header encoden $headers]
@@ -1199,10 +1302,14 @@ oo::class create obex::Client {
         #  headers - List of alternating header names and values.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in <Obex headers> and
+        # with the header is formatted as described in [OBEX headers] and
         # that the supplied headers if valid for `ABORT` requests.
         # The `ConnectionId` header is automatically generated as needed
-        # and shoould not be included by the caller.
+        # and should not be included by the caller.
+        #
+        # Returns a list of one or two elements, the first of which is either
+        # `continue` or `failed`, and the second, if present, is data to be sent
+        # to the server. See [input] for details.
 
         my BeginRequest abort
         set state(headers_out) [header encoden $headers]
@@ -1222,10 +1329,14 @@ oo::class create obex::Client {
         #  -nocreate - Do no create folder if it does not exist.
         #
         # It is the caller's responsibility to ensure the value associated
-        # with the header is formatted as described in <Obex headers> and
+        # with the header is formatted as described in [OBEX headers] and
         # that the supplied headers if valid for `SETPATH` requests.
         # The `ConnectionId` header is automatically generated as needed
         # and shoould not be included by the caller.
+        #
+        # Returns a list of one or two elements, the first of which is either
+        # `continue` or `failed`, and the second, if present, is data to be sent
+        # to the server. See [input] for details.
 
         my BeginRequest setpath
 
@@ -1260,9 +1371,17 @@ oo::class create obex::Client {
     method ResponseHandler {continue_allowed} {
         set status_code [dict get $state(response) ResponseCode]
         if {$status_code == 0x90} {
+            # CONTINUE
             # Send the next packet in the request
             if {$continue_allowed} {
-                return [list continue [my OutgoingPacket [request::OpCode $state(op)] 0]]
+                if {[llength $state(headers_out)] || ! $state(streaming)} {
+                    return [list continue [my OutgoingPacket [request::OpCode $state(op)] 0]]
+                } else {
+                    # We have no more headers to send but are in streaming mode
+                    # so application needs to give us something to send.
+                    set state(state) STREAMING
+                    return writable
+                }
             } else {
                 my SetErrorStatus "CONTINUE packet received for $state(op) request."
                 return failed
@@ -1288,6 +1407,7 @@ oo::class create obex::Client {
         set state(input) ""
         set state(headers_out) {}
         set state(headers_in) {}
+        set state(streaming) 0
         unset -nocomplain state(response)
     }
 
@@ -1353,14 +1473,14 @@ oo::class create obex::Server {
         #   `continue` - The request has only been partially received. If the
         #            second element is present and not empty, it is data to be
         #            sent to the client. In either case, the application should
-        #            read more data from the client and again invoke the <input>
+        #            read more data from the client and again invoke the [input]
         #            method passing it the read data.
-        #   `failed` - The request has failed. See <Error handling> for dealing
+        #   `failed` - The request has failed. See [Request completion status] for dealing
         #            with errors and failures. If the second element is present
         #            and not empty, it is data to be sent to the client. In
         #            either case, the application must not use this instance
         #            to accept additional requests without first calling the
-        #            <reset> method.
+        #            [reset] method.
         #
         # In the **response** phase,
         #   `done` - The full response has been sent to the client.
@@ -1370,14 +1490,14 @@ oo::class create obex::Server {
         #   `continue` - The response has only been partially sent. If the
         #            second element is present and not empty, it is data to be
         #            sent to the client. In either case, the application should
-        #            read more data from the client and invoke the <input> method
+        #            read more data from the client and invoke the [input] method
         #            again passing it the read data.
-        #   `failed` - The request has failed. See <Error handling> for dealing
+        #   `failed` - The request has failed. See [Request completion status] for dealing
         #            with errors and failures. If the second element is present
         #            and not empty, it is data to be sent to the client. In
         #            either case, the application must not use this instance
         #            to accept additional requests without first calling the
-        #            <reset> method.
+        #            [reset] method.
         #
 
         switch -exact -- $state(state) {

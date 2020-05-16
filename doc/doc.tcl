@@ -216,7 +216,11 @@ namespace eval obex {
         ### Request completion status
 
         The completion of a request is indicated by a return value of
-        `done` or `failed` from the operation methods.
+        `done`, `writable` or `failed` from the operation methods.
+
+        The value `writable` is only returned in a `PUT` streaming operation
+        to indicate the next chunk of the data stream may be sent. See
+        [::obex::Client.put_stream] for details.
 
         The value `failed` indicates a complete response was not received from
         the server. The cause may be protocol version incompatibility, protocol
@@ -230,10 +234,10 @@ namespace eval obex {
         `success`, `informational`, `redirect`,
         `clienterror`, `servererror`, `databaseerror` or `protocolerror`.
 
-        Each status value corresponds to one of several OBEX response
-        codes from the server. The actual response code may be obtained
+        Each request completion status value corresponds to one of several OBEX
+        response codes from the server. The actual response code may be obtained
         with the [Client.status_detail] method. The `ResponseCode` and
-        `ResponseCodeName` dictionary keys returned by the method contain the 
+        `ResponseCodeName` dictionary keys returned by the method contain the
         numeric and mnemonic values.
 
         A status of `success` includes the following response codes
