@@ -518,7 +518,7 @@ proc obex::core::response::ResponseCodeName {op} {
     proc ResponseCodeName {op} {
         variable ResponseCodeNames
         set op [expr {$op & 0x7f}]; # Knock off final bit
-        set op [format 0x%2.2X $op]
+        set op [format 0x%2.2x $op]
         if {[info exists ResponseCodeNames($op)]} {
             return $ResponseCodeNames($op)
         }
@@ -946,8 +946,8 @@ oo::class create obex::Client {
         # steps required for the operation to complete. The original modes are
         # restored before returning.
         #
-        # Returns `done` if the operation completed successfully and
-        # `failed` otherwise.
+        # Returns `done`, `writable` or `failed`. See [input]. Note the
+        # method will not return `continue`.
 
         set chan_config [chan configure $chan]
         chan configure $chan -blocking 1 -buffering none \
@@ -1042,6 +1042,11 @@ oo::class create obex::Client {
     method idle {} {
         # Returns 1 if another request can be issued, otherwise 0.
         return [expr {$state eq "IDLE"}]
+    }
+
+    method connected {} {
+        # Returns 1 if the client has an OBEX connection active.
+        return [info exists state(connection_id)]
     }
 
     method status {} {
