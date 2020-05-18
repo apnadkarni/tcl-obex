@@ -99,7 +99,7 @@ oo::class create obex::opp::Client {
         # The method is synchronous and will raise an error on failure.
         #
         # Returns the business card in vCard format.
-        set headers [list Type "text/vcard\0"]
+        set headers [list Type "text/x-vcard\0"]
         set result [my await $chan [my get $headers]]
         if {$result eq "done" && [my status] eq "success"}  {
             return [join [my bodies]]

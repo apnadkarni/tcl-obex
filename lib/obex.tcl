@@ -377,6 +377,43 @@ proc obex::core::header::findall {headers key} {
     return $values
 }
 
+proc obex::core::parameters::DecodeFirst {bytes start} {
+    # Returns the first application parameter in a AppParameters header
+    #  bytes - binary string containing app parameters
+    #  start - where the app parameter starts
+
+    if {[binary scan $bytes x${start}cucu tag length] != 1} {
+        error "Truncated application parameter header."
+    }
+    
+    set trailing_len [expr {[string length $bytes] - $start}]
+    # Length must be at least 2 bytes - tag + length byte
+    # Also, the string must have enough bytes for the length.
+    if {[binary scan $bytes x${start}cucu tag len] != 2 ||
+        $len < 2 ||
+        $len > $trailing_len} {
+        error "Invalid Obex application parameter length."
+    }
+    set value [string range $bytes [expr {$start+2}] [expr {$start+$len-1}]]
+
+    # Return the name, the value and the new offset for next header element
+    return [list $tag $value [expr {$start+$len}]]
+}
+
+proc obex::core::parameters::decode {bytes} {
+    # Decodes a [AppParameters][OBEX headers] header value.
+    #  bytes - binary containing the header value
+    # Returns a list of containg the integer application parameter
+    # tag alternating with the corresponding binary string value.
+    set nbytes [string length $bytes]
+    set params {}
+    set start 0
+    while {$start < $nbytes} {
+        lassign [DecodeFirst $bytes $start] tag value start
+        lappend params $tag $value
+    }
+    return $params
+}
 
 if {$::tcl_platform(byteOrder) eq "littleEndian"} {
     proc obex::core::ToUnicodeBE {s} {
