@@ -114,6 +114,19 @@ namespace eval obex {
         reflect the profile name. For example, the client and server classes
         for the *Object Push Profile (OPP)* are contained in the `::obex::opp`
         namespace.
+
+        ## References
+
+        For a tutorial and examples see these
+        [blog posts](https://www.magicsplat.com/blog/tags/bluetooth/).
+
+        An older version of the OBEX specification is available as a
+        [PDF](https://www.irda.org/standards/pubs/OBEX13.pdf). Newer
+        versions require membership in IrDA.
+
+        OBEX profile specifications for Bluetooth are at the
+        [Bluetooth site](https://www.bluetooth.com/specifications/profiles-overview/)
+        
     }
 }
 
@@ -451,7 +464,7 @@ proc obex::Document {outfile args} {
     variable _preamble
 
     set ns [namespace current]
-    set namespaces [list $ns ${ns}::core]
+    set namespaces [list $ns ${ns}::opp ${ns}::core]
     ruff::document $namespaces -autopunctuate 1 -excludeprocs {^[_A-Z]} \
         -excludeclasses [list ${ns}::Server] \
         -recurse 0 -preamble $_preamble -pagesplit namespace \

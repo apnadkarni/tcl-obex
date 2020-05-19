@@ -4,6 +4,20 @@
 #
 # See the file LICENSE for license
 
+namespace eval obex {
+    variable version 0.1
+
+    # This script name and where it resides
+    variable script [file tail [info script]]
+    variable dir [file dirname [info script]]
+
+    # Source files other than this one
+    variable other_scripts {opp.tcl}
+
+    # Are we a module?
+    variable is_module [string equal -nocase [file ext $script] .tm]
+}
+
 namespace eval obex::core {
 
     variable id_counter 1
@@ -47,6 +61,12 @@ namespace eval obex::core {
 
         variable Ids
         variable Names
+    }
+
+    namespace eval parameters {
+        namespace path [namespace parent]
+        namespace export decode
+        namespace ensemble create
     }
 }
 
@@ -1760,5 +1780,116 @@ oo::class create obex::Server {
     }
 }
 
-source [file join [file dirname [info script]] opp.tcl]
-package provide obex 0.1
+namespace eval obex::private {
+    proc find_target_install_dir {} {
+        foreach tmdir [::tcl::tm::path list] {
+            if {[file tail $tmdir] eq "8.6"} {
+                return $tmdir
+            }
+        }
+        return ""
+    }
+}
+
+# Check if running as a tm
+if {$::obex::is_module} {
+    # Running as a tm. Provide an install command
+    proc obex::private::install {{dir {}}} {
+        if {$dir eq ""} {
+            # Locate a directory on the module search path for Tcl 8.6
+            set dir [find_target_install_dir]
+            if {$dir eq ""} {
+                error "Could not locate path for installing obex module."
+            }
+        }
+        file copy -force [file join $::obex::dir $::obex::script] $dir
+    }
+    proc obex::private::distribute {{dir {}}} {
+        error "Command distribute not available in module build."
+    }
+} else {
+    # Not a tm, source the other files
+    apply {{files} {
+        foreach file $files {
+            source [file join $obex::dir opp.tcl]
+        }
+    }} $obex::other_scripts
+
+    proc obex::private::install {{dir {}}} {
+        # Install directly from sources
+        if {$dir eq ""} {
+            # Locate a directory on the module search path for Tcl 8.6
+            set dir [find_target_install_dir]
+            if {$dir eq ""} {
+                error "Could not locate path for installing obex module."
+            }
+        }
+        distribute $dir
+    }
+
+    # Also define a distribute proc to generate a tm
+    proc obex::private::distribute {{dir {}}} {
+        if {$dir eq ""} {
+            set dir [file join $::obex::dir .. dist]
+        }
+        set outname obex-$::obex::version
+        set tmfile [file join $dir ${outname}.tm]
+
+        file mkdir $dir
+        set tm [open $tmfile w]
+
+        foreach file [linsert $::obex::other_scripts 0 $::obex::script] {
+            puts $tm "# File $file"
+            set in [open [file join $::obex::dir $file] r]
+            puts $tm [read $in]
+            close $in
+        }
+    }
+}
+
+proc obex::private::uninstall {{ver {}}} {
+    if {$ver eq "all"} {
+        foreach dir [tcl::tm::path list] {
+            foreach file [glob -nocomplain -directory $dir -- obex-*.tm] {
+                if {[file exists $file]} {
+                    puts "Uninstalling $file"
+                    file delete $file
+                }
+            }
+        }
+    } else {
+        if {$ver eq ""} {
+            set ver $::obex::version
+        }
+        foreach dir [tcl::tm::path list] {
+            set file [file join $dir obex-$ver.tm]
+            if {[file exists $file]} {
+                puts "Uninstalling $file"
+                file delete $file
+            }
+        }
+    }
+}
+
+package provide obex $obex::version
+
+
+
+# If we are the main script, accept commands.
+if {[info exists argv0] &&
+    [file dirname [file normalize [info script]/...nosuchfile]] eq [file dirname [file normalize $argv0/...nosuchfile]]} {
+    switch -exact -- [lindex $argv 0] {
+        install {
+            obex::private::install {*}[lrange $argv 1 end]
+        }
+        uninstall {
+            obex::private::uninstall {*}[lrange $argv 1 end]
+        }
+        distribute {
+            obex::private::distribute {*}[lrange $argv 1 end]
+        }
+        default {
+            puts "Unknown command \"[lindex $argv 0]\"."
+        }
+    }
+}
