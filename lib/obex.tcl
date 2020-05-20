@@ -79,7 +79,7 @@ proc obex::core::request::encode {op args} {
         return [encode_setpath 0 0 {*}$args]
     }
     # Generic request encoder
-    set headers [header encode {*}$args]
+    set headers [join [header encoden {*}$args] ""]
     # Packet is opcode, 2 bytes length, followed by headers
     set len [expr {3+[string length $headers]}]
     append packet [binary format cSu $op $len] $headers
@@ -138,7 +138,7 @@ proc obex::core::request::decode {packet outvar} {
 }
 
 proc obex::core::request::EncodeConnect {args} {
-    set headers [header encode {*}$args]
+    set headers [join [header encoden {*}$args] ""]
     # Packet is opcode 0x80, 2 bytes length, version (1.0->0x10),
     # flags (0), 2 bytes max len
     # followed by headers
@@ -149,7 +149,7 @@ proc obex::core::request::EncodeConnect {args} {
 }
 
 proc obex::core::request::encode_setpath {flags constants args} {
-    set headers [header encode {*}$args]
+    set headers [join [header encoden {*}$args] ""]
     # Packet is opcode 0x85, 2 bytes length,
     # flags, constants, # followed by headers
     set len [expr {5+[string length $headers]}]
@@ -863,6 +863,9 @@ oo::class create obex::Client {
     #  max_packet_len - max negotiated length of packet
     #  connection_id - ConnectionId as sent by remote. May not be present.
     #  connection_header - Binary connection header corresponding to $connection_id
+    #  connected - a CONNECT request was successfully made. Note not all
+    #   servers respond with a connection id so this does not mean the
+    #   connection_id element is present.
     #  target - Target header sent, if any
     #  who    - Who header sent, if any
     # Per request:
@@ -890,6 +893,7 @@ oo::class create obex::Client {
 
         # Connection specific state
         set state(state)  IDLE
+        set state(connected) false
         unset -nocomplain state(connection_id)
         unset -nocomplain state(connection_header)
         unset -nocomplain state(target)
@@ -1043,7 +1047,7 @@ oo::class create obex::Client {
             # Read the entire next packet.
             set packet [read $chan 3]
             if {[string length $packet] < 3} {
-                SetErrorStatus "Trucated read. Connection brken?"
+                my SetErrorStatus "Truncated read ([string length $packet]). Connection broken?"
                 return failed
             }
             set packet_length [packet length $packet]
@@ -1052,7 +1056,7 @@ oo::class create obex::Client {
                 set rest_len [expr {$packet_length - 3}]
                 set rest [read $chan $rest_len]
                 if {[string length $rest] < $rest_len} {
-                    SetErrorStatus "Trucated read. Connection brken?"
+                    my SetErrorStatus "Truncated read ([string length $rest]). Connection broken?"
                     return failed
                 }
                 append packet $rest
@@ -1070,16 +1074,17 @@ oo::class create obex::Client {
         # elements:
         #   State - Client state; one of `IDLE`, `BUSY` or `ERROR`
         #   Connected - 0/1 depending on whether connected or not.
-        #   ConnectionId - The connection id. Only present if connected.
+        #   ConnectionId - The connection id. Only present if connected
+        #                  **and** remote server sent a connection id.
         #   MaxPacketLength - Maximum packet length negotiated.
         #   ErrorMessage - If present, the last error seen.
 
         set l [list State $state(state) \
+                   Connected $state(connected) \
                    MaxPacketLength $state(max_packet_len)]
+        
         if {[info exists state(connection_id)]} {
-            lappend l Connected 1 ConnectionId $state(connection_id)
-        } else {
-            lappend l Connected 0
+            lappend l ConnectionId $state(connection_id)
         }
         if {[info exists state(error_message)]} {
             lappend l ErrorMessage $state(error_message)
@@ -1103,7 +1108,7 @@ oo::class create obex::Client {
 
     method connected {} {
         # Returns 1 if the client has an OBEX connection active.
-        return [info exists state(connection_id)]
+        return $state(connected)
     }
 
     method status {} {
@@ -1162,7 +1167,7 @@ oo::class create obex::Client {
         # `continue` or `failed`, and the second, if present, is data to be sent
         # to the server. See [input] for details.
 
-        if {[info exists state(connection_id)]} {
+        if {$state(connected)} {
             error "Already connected."
         }
 
@@ -1182,6 +1187,7 @@ oo::class create obex::Client {
     method ConnectResponseHandler {} {
         dict with state(response) {
             if {$ResponseCode == 0xA0} {
+                set state(connected) true
                 # Store connection id if it exists
                 if {[header find $Headers ConnectionId state(connection_id)]} {
                     set state(connection_header) \
@@ -1212,7 +1218,8 @@ oo::class create obex::Client {
         # Returns a list of one or two elements, the first of which is either
         # `continue` or `failed`, and the second, if present, is data to be sent
         # to the server. See [input] for details.
-        if {![info exists state(connection_id)]} {
+
+        if {!$state(connected)} {
             error "Not connected."
         }
         my BeginRequest disconnect
@@ -1223,6 +1230,7 @@ oo::class create obex::Client {
             # Not all headers fit. Disconnect request must be a single packet
             my RaiseError "Headers too long for disconnect request."
         }
+        set state(connected) false
         return [list continue $packet]
     }
 

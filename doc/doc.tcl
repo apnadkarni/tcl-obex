@@ -8,7 +8,7 @@ namespace eval obex {
 
     variable _preamble {
 
-        ## The OBEX standard
+        ## Introduction
 
         The Object Exchange (OBEX) standard defines a protocol and application
         framework for transferring objects and related meta-information between
@@ -17,13 +17,25 @@ namespace eval obex {
         Originally designed for use over IrDA, it is now used over other
         transport protocols as well, in particular Bluetooth and TCP/IP.
 
-        ## The `obex` package
+        The `obex` package is an implementation of this protocol.
 
-        The `obex` package implements the OBEX protocol. It
-        package may be downloaded from
+        ## Download and install
+
+        The package is distributed as a single file Tcl module and 
+        may be downloaded from
         <https://sourceforge.net/projects/magicsplat/files/obex/>.
-        After extracting into a directory listed in Tcl's `auto_path`,
-        it can be loaded as
+        To install the package, run the following command from
+        the command line:
+
+            tclsh obex-$VERSION.tm install
+
+        where `VERSION` is the package version you downloaded.
+
+        Alternatively, just copy the downloaded file into a directory
+        listed in the list returned by the Tcl `tcl::tm::path list`
+        command.
+
+        After installation, the package can be loaded as
 
             package require obex
 
