@@ -27,7 +27,7 @@ namespace eval obex {
         To install the package, run the following command from
         the command line:
 
-            tclsh obex-$VERSION.tm install
+            tclsh obex-VERSION.tm install
 
         where `VERSION` is the package version you downloaded.
 
@@ -368,7 +368,7 @@ namespace eval obex {
 
         ### Generating responses
 
-        [TBD]
+        [TBD] *Server not implemented*
 
         ### OBEX headers
 

@@ -104,11 +104,11 @@ oo::class create obex::opp::Client {
         # is not known to them. In such cases, the MIME type must be
         # passed in.
         #
-        # The method is synchronous and will block until completion and
-        # will raise an error if the transfer was not successful.
-        # The [clear] method must be called in the latter case before any
-        # further methods are called on the object.
-        # 
+        # The method is synchronous and will block until completion and will
+        # raise an error if the transfer was not successful. The
+        # [::obex::Client.clear] method must be called in the latter case before
+        # any further methods are called on the object.
+        #
 
         set file_size [file size $path]
         set from [open $path rb]
@@ -151,9 +151,9 @@ oo::class create obex::opp::Client {
     method pull_card {} {
         # Retrieves the business card from the device.
         #  chan - Channel connected to the device.
-        # 
+        #
         # The method is synchronous and will raise an error on failure.
-        # The [clear] method must be called in case of error before
+        # The [::obex::Client.clear] method must be called in case of error before
         # further methods are called on the object.
         #
         # Returns the business card in vCard format.
@@ -176,8 +176,8 @@ oo::class create obex::opp::Client {
         # Sends the business card $vcard to the remote
         # device and retrieves the one from the device.
         #
-        # The method is synchronous and will raise an error on failure.
-        # The [clear] method must be called in case of error before
+        # The method is synchronous and will raise an error on failure. The
+        # [::obex::Client.clear] method must be called in case of error before
         # further methods are called on the object.
         #
         # Returns the business card from the remote device in vCard format.

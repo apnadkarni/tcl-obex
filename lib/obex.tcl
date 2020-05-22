@@ -72,6 +72,16 @@ namespace eval obex::core {
 
 
 proc obex::core::request::encode {op args} {
+    # Encodes an OBEX request.
+    #  op - A numeric request opcode or a opcode [mnemonic][OBEX operations].
+    #  args - Alternating list of [header names][OBEX headers] and values.
+    #    This may also be provided as a single argument of the same form.
+    # Encodes a OBEX packet containing the specified opcode and headers.
+    # No length checks are made and caller is responsible for ensuring the
+    # generated packet length does not exceed the maximum packet size
+    # for the OBEX connection.
+    #
+    # Returns the encoded packet.
     set op [OpCode $op]
     if {$op == 0x80} {
         return [EncodeConnect {*}$args]
@@ -88,6 +98,36 @@ proc obex::core::request::encode {op args} {
 }
 
 proc obex::core::request::decode {packet outvar} {
+    # Decodes an OBEX request packet received from a client.
+    #  packet - Binary OBEX packet.
+    #  outvar - name of variable in caller's context where the decoded packet
+    #    is to be stored.
+    #
+    # If $packet contains a complete OBEX packet, the command stores the
+    # decoded packet in the variable names $outvar in the caller's context.
+    # The value is in the form of a dictionary with the following keys:
+    #  PacketLength - Length of packet.
+    #  OpCode       - Numeric request opcode.
+    #  OpName       - Mnemonic opcode name.
+    #
+    #  Final        - 1/0 depending on whether the `final` bit was set
+    #                 in the request opcode or not.
+    #  Headers      - List of headers received in the packet.
+    #
+    # In case the packet was a `connect` request, the dictionary also
+    # contains the following keys:
+    #  Flags        - Always 0 for OBEX 1.0
+    #  MaxLength    - Maximum length OBEX packet length the server can
+    #                 receive.
+    #  MajorVersion - The OBEX protocol major version returned by server.
+    #  MinorVersion - The OBEX protocol minor version returned by server.
+    #
+    # In case the packet was a `setpath` request, the dictionary also
+    # contains the following keys:
+    #  Flags        - The flags field from the request.
+    #  Constants    - The constants field from the request.
+    #
+    # Returns 1 if the packet was decoded or 0 if it is incomplete.
     upvar 1 $outvar decoded_packet
     if {[binary scan $packet cuSu op len] != 2 ||
         $len > [string length $packet]} {
@@ -101,7 +141,7 @@ proc obex::core::request::decode {packet outvar} {
             return 0
         }
         set decoded_packet [list \
-                                Length $len \
+                                PacketLength $len \
                                 OpCode $op \
                                 Final  [expr {($op & 0x80) == 0x80}] \
                                 OpName [OpName $op] \
@@ -117,7 +157,7 @@ proc obex::core::request::decode {packet outvar} {
             return 0
         }
         set decoded_packet [list \
-                                Length $len \
+                                PacketLength $len \
                                 OpCode $op \
                                 Final  [expr {($op & 0x80) == 0x80}] \
                                 OpName [OpName $op] \
@@ -127,7 +167,7 @@ proc obex::core::request::decode {packet outvar} {
                                ]
     } else {
         set decoded_packet [list \
-                                Length $len \
+                                PacketLength $len \
                                 OpCode $op \
                                 OpName [OpName $op] \
                                 Final  [expr {($op & 0x80) == 0x80}] \
@@ -149,6 +189,22 @@ proc obex::core::request::EncodeConnect {args} {
 }
 
 proc obex::core::request::encode_setpath {flags constants args} {
+    # Encodes a `setpath` OBEX request.
+    #  flags - Numeric value to send for the flags field in the `setpath`
+    #    request.
+    #  constants - Numeric value to send for the constants field in the request
+    #  args - Alternating list of [header names][OBEX headers] and values.
+    #    This may also be provided as a single argument of the same form.
+    # This command can be used in lieu of the [request encode] command when the
+    # `setpath` request needs to include values for the `flags` or `constants`
+    # fields.
+    #
+    # No length checks are made and caller is responsible for ensuring the
+    # generated packet length does not exceed the maximum packet size
+    # for the OBEX connection.
+    #
+    # Returns an encoded OBEX `setpath` request packet.
+
     set headers [join [header encoden {*}$args] ""]
     # Packet is opcode 0x85, 2 bytes length,
     # flags, constants, # followed by headers
@@ -165,7 +221,7 @@ proc obex::core::response::decode {packet request_op outvar} {
     #    is to be stored.
     #
     # The dictionary stored in $outvar has the following keys:
-    #  Length       - Length of packet.
+    #  PacketLength       - Length of packet.
     #  Final        - 1/0 depending on whether the `final` bit was set
     #                 in the response operation code or not.
     #  Headers      - List of headers received in the packet.
@@ -197,7 +253,7 @@ proc obex::core::response::decode {packet request_op outvar} {
     }
 
     set decoded_packet [list \
-                            Length     $len \
+                            PacketLength     $len \
                             ResponseCode $status \
                             ResponseStatus   [ResponseStatus $status] \
                             Final      [expr {($status & 0x80) == 0x80}] \
@@ -213,7 +269,7 @@ proc obex::core::response::DecodeConnect {packet outvar} {
     #    is to be stored.
     #
     # The dictionary returned by the command has the following keys:
-    #  Length       - Length of packet.
+    #  PacketLength       - Length of packet.
     #  Final        - 1/0 depending on whether the `final` bit was set
     #                 in the response operation code or not.
     #  Headers      - List of headers received in the packet.
@@ -233,7 +289,7 @@ proc obex::core::response::DecodeConnect {packet outvar} {
     }
     upvar 1 $outvar decoded_packet
     set decoded_packet [list \
-                            Length $len \
+                            PacketLength $len \
                             ResponseCode $status \
                             ResponseStatus [ResponseStatus $status] \
                             Final  [expr {($status & 0x80) == 0x80}] \
@@ -963,7 +1019,7 @@ oo::class create obex::Client {
 
         # TBD - should this be a protocol error if input was longer than packet
         # Possibly a response followed by an ABORT?
-        set state(input) [string range $state(input) [dict get $response Length] end]
+        set state(input) [string range $state(input) [dict get $response PacketLength] end]
 
         # If we have a connection id, the incoming one must match if present
         if {[info exists connection_id]} {
