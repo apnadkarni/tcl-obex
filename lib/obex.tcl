@@ -56,7 +56,7 @@ namespace eval obex::core {
 
     namespace eval header {
         namespace path [namespace parent]
-        namespace export encode encoden decode find findall
+        namespace export encode encoden decode decoden find findall
         namespace ensemble create
 
         variable Ids
@@ -149,7 +149,7 @@ proc obex::core::request::decode {packet outvar} {
                                 MinorVersion [expr {$version & 0xf}] \
                                 Flags  $flags \
                                 MaxLength $maxlen \
-                                Headers [header decode $packet 7] \
+                                Headers [header decoden $packet 7] \
                                ]
     } elseif {$op == 0x87} {
         # SETPATH request
@@ -163,7 +163,7 @@ proc obex::core::request::decode {packet outvar} {
                                 OpName [OpName $op] \
                                 Flags  $flags \
                                 Constants $constants \
-                                Headers [header decode $packet 5] \
+                                Headers [header decoden $packet 5] \
                                ]
     } else {
         set decoded_packet [list \
@@ -171,7 +171,7 @@ proc obex::core::request::decode {packet outvar} {
                                 OpCode $op \
                                 OpName [OpName $op] \
                                 Final  [expr {($op & 0x80) == 0x80}] \
-                                Headers [header decode $packet 3] \
+                                Headers [header decoden $packet 3] \
                                ]
     }
     return 1
@@ -257,7 +257,7 @@ proc obex::core::response::decode {packet request_op outvar} {
                             ResponseCode $status \
                             ResponseStatus   [ResponseStatus $status] \
                             Final      [expr {($status & 0x80) == 0x80}] \
-                            Headers    [header decode $packet 3] \
+                            Headers    [header decoden $packet 3] \
                            ]
     return 1
 }
@@ -297,7 +297,7 @@ proc obex::core::response::DecodeConnect {packet outvar} {
                             MinorVersion [expr {$version & 0xf}] \
                             Flags  $flags \
                             MaxLength $maxlen \
-                            Headers [header decode $packet 7] \
+                            Headers [header decoden $packet 7] \
                            ]
     return 1
 }
@@ -325,6 +325,12 @@ proc obex::core::packet::complete {packet} {
 }
 
 proc obex::core::header::encode {header_name header_value} {
+    # Encodes a single OBEX header.
+    #  header_name - The [header identifier][::obex::OBEX headers] name.
+    #  header_value - The value to encode. For binary header types, it is
+    #    caller's responsibility to pass this as a proper binary string.
+    #
+    # Returns the encoded header binary string.
     set hi [Id $header_name]
     # Top 2 bits encode data type
     switch -exact -- [expr {$hi >> 6}] {
@@ -355,6 +361,13 @@ proc obex::core::header::encode {header_name header_value} {
 }
 
 proc obex::core::header::encoden {args} {
+    # Encodes multiple OBEX headers.
+    #  args - Alternating list of [header names][OBEX headers] and values.
+    #    This may also be provided as a single argument of the same form.
+    #    For binary header types, it is
+    #    caller's responsibility to pass the values as a proper binary string.
+    #
+    # Returns the encoded headers as a list of binary strings.
     if {[llength $args] == 1} {
         set args [lindex $args 0]
     }
@@ -422,7 +435,12 @@ proc obex::core::header::DecodeFirst {bytes start} {
     return [list $name $value [expr {$start+$len}]]
 }
 
-proc obex::core::header::decode {bytes start} {
+proc obex::core::header::decoden {bytes start} {
+    # Decodes binary OBEX headers within a packet.
+    #  bytes - Binary string containing headers.
+    #  start - Offset into $bytes where the headers start.
+    # Returns a list of headers as dictionaries with
+    # [header names][OBEX headers] as keys.
     set nbytes [string length $bytes]
     set headers {}
     while {$start < $nbytes} {
@@ -432,9 +450,28 @@ proc obex::core::header::decode {bytes start} {
     return $headers
 }
 
-proc obex::core::header::find {headers key outvar} {
+proc obex::core::header::decode {bytes start} {
+    # Decodes a single binary OBEX header within a packet.
+    #  bytes - Binary string containing a header.
+    #  start - Offset into $bytes where the header starts.
+    # Returns a pair consisting of the [header name][OBEX headers]
+    # and value.
+    return [lrange [DecodeFirst $bytes $start] 0 1]
+}
+
+proc obex::core::header::find {headers header_name outvar} {
+    # Gets the value of a header from a list of decoded OBEX headers.
+    #  headers - list of decoded OBEX headers.
+    #  header_name - [Header name][OBEX headers] to retrieve.
+    #  outvar - Name of variable in caller's context where to store
+    #   the header value.
+    # If multiple headers of the same name exist, returns the value of
+    # the first in the list.
+    #
+    # Returns 1 if the header is found and stores its value in $outvar;
+    # otherwise returns 0.
     foreach {name val} $headers {
-        if {[string equal -nocase $key $name]} {
+        if {[string equal -nocase $header_name $name]} {
             upvar 1 $outvar v
             set v $val
             return 1
@@ -443,14 +480,18 @@ proc obex::core::header::find {headers key outvar} {
     return 0
 }
 
-proc obex::core::header::findall {headers key} {
-    set values {}
-    foreach {name val} $headers {
-        if {[string equal -nocase $key $name]} {
-            lappend values $val
+proc obex::core::header::findall {headers header_name} {
+    # Gets the values of headers with a given name in list of
+    # decoded OBEX headers
+    #  headers - list of decoded OBEX headers.
+    #  header_name - [Header name][OBEX headers] to retrieve.
+    # Returns the list of values from headers that matched $header_name.
+    return [lmap {name val} $headers {
+        if {![string equal -nocase $header_name $name]} {
+            continue
         }
-    }
-    return $values
+        set val
+    }]
 }
 
 proc obex::core::parameters::DecodeFirst {bytes start} {
@@ -461,7 +502,7 @@ proc obex::core::parameters::DecodeFirst {bytes start} {
     if {[binary scan $bytes x${start}cucu tag length] != 1} {
         error "Truncated application parameter header."
     }
-    
+
     set trailing_len [expr {[string length $bytes] - $start}]
     # Length must be at least 2 bytes - tag + length byte
     # Also, the string must have enough bytes for the length.
