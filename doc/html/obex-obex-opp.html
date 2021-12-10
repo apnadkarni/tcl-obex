@@ -1,0 +1,293 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Obex</title>
+<link rel='stylesheet' type='text/css' href='assets/ruff-min.css' />
+<script type='text/javascript' src='assets/ruff-min.js'></script>
+</head>
+<body>
+<div class='ruff-layout'>
+<header class='ruff-layout-header ruff-hd'>
+<a style='text-decoration:none;' href='obex.html'>Obex (v0.1)</a>
+
+
+            <div id="ruffButtonBar">
+            <button id="ruffNavMove" onclick="ruffMoveNavPane()"></button>
+            <button id="ruffToggleTheme" onclick="ruffNextTheme()"></button>
+            </div>
+        </header><main class='ruff-layout-main ruff-bd'><h1 class='ruff'><a name='::obex::opp'></a>::obex::opp<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h1>
+<div style='clear:both;'></div>
+<h2 class='ruff'><a name='::obex::opp-Commands'></a>Commands<span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp'>opp</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<div style='clear:both;'></div>
+<h4 class='ruffproc'><a name='::obex::opp::bt_uuid'>bt_uuid</a><span class='ns_scope'> [<a href="obex-obex-opp.html#::obex::opp" title="::obex::opp" class='ruff_cmd'>::obex::opp</a>]</span><span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp'>opp</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Returns the Bluetooth UUID for the service class for the Object Push Profile.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>bt_uuid</span> <br></div>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the Bluetooth UUID for the service class for the Object Push Profile.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_43' href="javascript:toggleSource('43')">Show source</a></p>
+<div id='43' class='ruff_dyn_src'><pre>proc ::obex::opp::bt_uuid {} {
+
+    # Returns the Bluetooth UUID for the service class for the
+    # Object Push Profile.
+    return 00001105-0000-1000-8000-00805f9b34fb
+}</pre></div>
+</div><h2 class='ruff'><a name='::obex::opp-Classes'></a>Classes<span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp'>opp</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<div style='clear:both;'></div>
+<h3 class='ruffclass'><a name='::obex::opp::Client'>Client</a><span class='ns_scope'> [<a href="obex-obex-opp.html#::obex::opp" title="::obex::opp" class='ruff_cmd'>::obex::opp</a>]</span><span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp'>opp</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<h5 class='ruff'>Method summary</h5><table class='ruff_deflist'>
+<tr><td><a href="obex-obex-opp.html#::obex::opp::Client::constructor" title="constructor" class='ruff_cmd'>constructor</a></td><td>Constructor for the class.</td></tr>
+<tr><td><code>abort</code></td><td>See <a href="obex-obex.html#::obex::Client::abort" title="::obex::Client.abort" class='ruff_cmd'>::obex::Client.abort</a></td></tr>
+<tr><td><code>await</code></td><td>See <a href="obex-obex.html#::obex::Client::await" title="::obex::Client.await" class='ruff_cmd'>::obex::Client.await</a></td></tr>
+<tr><td><code>bodies</code></td><td>See <a href="obex-obex.html#::obex::Helper::bodies" title="::obex::Helper.bodies" class='ruff_cmd'>::obex::Helper.bodies</a></td></tr>
+<tr><td><code>clear</code></td><td>See <a href="obex-obex.html#::obex::Client::clear" title="::obex::Client.clear" class='ruff_cmd'>::obex::Client.clear</a></td></tr>
+<tr><td><a href="obex-obex-opp.html#::obex::opp::Client::close" title="close" class='ruff_cmd'>close</a></td><td>Closes an OBEX connection.</td></tr>
+<tr><td><code>connect</code></td><td>See <a href="obex-obex.html#::obex::Client::connect" title="::obex::Client.connect" class='ruff_cmd'>::obex::Client.connect</a></td></tr>
+<tr><td><code>connected</code></td><td>See <a href="obex-obex.html#::obex::Client::connected" title="::obex::Client.connected" class='ruff_cmd'>::obex::Client.connected</a></td></tr>
+<tr><td><code>disconnect</code></td><td>See <a href="obex-obex.html#::obex::Client::disconnect" title="::obex::Client.disconnect" class='ruff_cmd'>::obex::Client.disconnect</a></td></tr>
+<tr><td><a href="obex-obex-opp.html#::obex::opp::Client::exchange_cards" title="exchange_cards" class='ruff_cmd'>exchange_cards</a></td><td>Exchanges business cards with a device.</td></tr>
+<tr><td><code>get</code></td><td>See <a href="obex-obex.html#::obex::Client::get" title="::obex::Client.get" class='ruff_cmd'>::obex::Client.get</a></td></tr>
+<tr><td><code>headers</code></td><td>See <a href="obex-obex.html#::obex::Helper::headers" title="::obex::Helper.headers" class='ruff_cmd'>::obex::Helper.headers</a></td></tr>
+<tr><td><code>idle</code></td><td>See <a href="obex-obex.html#::obex::Client::idle" title="::obex::Client.idle" class='ruff_cmd'>::obex::Client.idle</a></td></tr>
+<tr><td><code>input</code></td><td>See <a href="obex-obex.html#::obex::Client::input" title="::obex::Client.input" class='ruff_cmd'>::obex::Client.input</a></td></tr>
+<tr><td><a href="obex-obex-opp.html#::obex::opp::Client::pull_card" title="pull_card" class='ruff_cmd'>pull_card</a></td><td>Retrieves the business card from the device.</td></tr>
+<tr><td><a href="obex-obex-opp.html#::obex::opp::Client::push_file" title="push_file" class='ruff_cmd'>push_file</a></td><td>Pushes the specified file over the given channel.</td></tr>
+<tr><td><code>put</code></td><td>See <a href="obex-obex.html#::obex::Client::put" title="::obex::Client.put" class='ruff_cmd'>::obex::Client.put</a></td></tr>
+<tr><td><code>put_delete</code></td><td>See <a href="obex-obex.html#::obex::Client::put_delete" title="::obex::Client.put_delete" class='ruff_cmd'>::obex::Client.put_delete</a></td></tr>
+<tr><td><code>put_stream</code></td><td>See <a href="obex-obex.html#::obex::Client::put_stream" title="::obex::Client.put_stream" class='ruff_cmd'>::obex::Client.put_stream</a></td></tr>
+<tr><td><code>reset</code></td><td>See <a href="obex-obex.html#::obex::Client::reset" title="::obex::Client.reset" class='ruff_cmd'>::obex::Client.reset</a></td></tr>
+<tr><td><code>response</code></td><td>See <a href="obex-obex.html#::obex::Client::response" title="::obex::Client.response" class='ruff_cmd'>::obex::Client.response</a></td></tr>
+<tr><td><code>session</code></td><td>See <a href="obex-obex.html#::obex::Client::session" title="::obex::Client.session" class='ruff_cmd'>::obex::Client.session</a></td></tr>
+<tr><td><code>setpath</code></td><td>See <a href="obex-obex.html#::obex::Client::setpath" title="::obex::Client.setpath" class='ruff_cmd'>::obex::Client.setpath</a></td></tr>
+<tr><td><code>state</code></td><td>See <a href="obex-obex.html#::obex::Client::state" title="::obex::Client.state" class='ruff_cmd'>::obex::Client.state</a></td></tr>
+<tr><td><code>status</code></td><td>See <a href="obex-obex.html#::obex::Client::status" title="::obex::Client.status" class='ruff_cmd'>::obex::Client.status</a></td></tr>
+<tr><td><code>status_detail</code></td><td>See <a href="obex-obex.html#::obex::Client::status_detail" title="::obex::Client.status_detail" class='ruff_cmd'>::obex::Client.status_detail</a></td></tr>
+</table>
+<h5 class='ruff'>Superclasses</h5><p class='ruff'><a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a></p>
+<h4 class='ruffmethod'><a name='::obex::opp::Client::constructor'>constructor</a><span class='ns_scope'> [<a href="obex-obex-opp.html#::obex::opp::Client" title="::obex::opp::Client" class='ruff_cmd'>::obex::opp::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Creates a client object for the OBEX Object Push Profile.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>Client create OBJNAME</span> <span class='ruff_arg'>chan ?args?</span><br><span class='ruff_cmd'>Client new</span> <span class='ruff_arg'>chan ?args?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>chan</code></td><td>Tcl channel to the remote server.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>The passed channel will be configured for OBEX communication and should not be used for any other purpose until the <a href="obex-obex-opp.html#::obex::opp::Client::close" title="close" class='ruff_cmd'>close</a> method is called.</p>
+<p class='ruff'>After all objects are transferred, the <a href="obex-obex-opp.html#::obex::opp::Client::close" title="close" class='ruff_cmd'>close</a> method should be called to disconnect the OBEX connection. Some servers will not commit the sent objects until the OBEX connection is ended. Note closing the passed Tcl channel does not suffice for this.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_44' href="javascript:toggleSource('44')">Show source</a></p>
+<div id='44' class='ruff_dyn_src'><pre>method constructor {chan args} {
+
+    # Creates a client object for the OBEX Object Push Profile.
+    #  chan - Tcl channel to the remote server
+    #
+    # The passed channel will be configured for OBEX communication and
+    # should not be used for any other purpose until the [close] method is
+    # called.
+    #
+    # After all objects are transferred, the [close] method should be
+    # called to disconnect the OBEX connection. Some servers will not
+    # commit the sent objects until the OBEX connection is ended.
+    # Note closing the passed Tcl channel does not suffice for this.
+
+    if {[llength [self next]]} {
+        next {*}$args
+    }
+
+    # Save original config of output channel and set it up for OBEX
+    set _chan_config [chan configure $chan]
+    chan configure $chan -blocking 1 -buffering none  -translation binary
+    set _chan $chan
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::opp::Client::close'>close</a><span class='ns_scope'> [<a href="obex-obex-opp.html#::obex::opp::Client" title="::obex::opp::Client" class='ruff_cmd'>::obex::opp::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Closes an OBEX connection.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT close</span> <br></div>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the Tcl channel that was used for communication.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_45' href="javascript:toggleSource('45')">Show source</a></p>
+<div id='45' class='ruff_dyn_src'><pre>method close {} {
+
+    # Closes an OBEX connection.
+    # Returns the Tcl channel that was used for communication.
+
+    if {![info exists _chan]} {
+        my RaiseError &quot;No channel attached.&quot;
+    }
+    set chan $_chan
+    unset _chan
+
+    try {
+        if {[my connected]} {
+            if {[my await $chan [my disconnect]] ne &quot;done&quot; ||
+                [my status] ne &quot;success&quot;
+            } {
+                my RaiseError &quot;Failed to close OBEX connection.&quot;
+            }
+        }
+    } finally {
+        # Restore original channel config. Note -encoding and -eofchar
+        # need explicitly set as -translation binary above
+        # changes them but not changed back by -translation below.
+        chan configure $chan  -blocking [dict get $_chan_config -blocking]  -buffering [dict get $_chan_config -buffering]  -encoding [dict get $_chan_config -encoding]  -translation [dict get $_chan_config -translation]  -eofchar [dict get $_chan_config -eofchar]
+    }
+
+    return $chan
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::opp::Client::exchange_cards'>exchange_cards</a><span class='ns_scope'> [<a href="obex-obex-opp.html#::obex::opp::Client" title="::obex::opp::Client" class='ruff_cmd'>::obex::opp::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Exchanges business cards with a device.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT exchange_cards</span> <span class='ruff_arg'>vcard ?mimetype?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>vcard</code></td><td>Content of vCard.</td></tr>
+<tr><td><code>mimetype</code></td><td>MIME type to use for <code>$vcard</code>. If unspecified, the MIME type <code>text/x-vard</code> is used. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>Sends the business card <code>$vcard</code> to the remote device and retrieves the one from the device.</p>
+<p class='ruff'>The method is synchronous and will raise an error on failure. The <a href="obex-obex.html#::obex::Client::clear" title="::obex::Client.clear" class='ruff_cmd'>::obex::Client.clear</a> method must be called in case of error before further methods are called on the object.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the business card from the remote device in vCard format.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_46' href="javascript:toggleSource('46')">Show source</a></p>
+<div id='46' class='ruff_dyn_src'><pre>method exchange_cards {vcard {mimetype {}}} {
+
+    # Exchanges business cards with a device.
+    #  vcard - Content of vCard
+    #  mimetype - MIME type to use for $vcard. If unspecified, the
+    #    MIME type `text/x-vard` is used.
+    # Sends the business card $vcard to the remote
+    # device and retrieves the one from the device.
+    #
+    # The method is synchronous and will raise an error on failure. The
+    # [::obex::Client.clear] method must be called in case of error before
+    # further methods are called on the object.
+    #
+    # Returns the business card from the remote device in vCard format.
+
+    # We will send first and then pull so any meta data headers
+    # will be preserved in headers_in.
+
+    my EnsureConnected
+    if {$mimetype eq &quot;&quot;} {
+        set headers [list Type &quot;text/x-vcard\0&quot;]
+    } else {
+        # Mimetype header is supposed to have a terminating \0.
+        # Add one if not present
+        if {[string index $mimetype end] ne &quot;\0&quot;} {
+            append mimetype &quot;\0&quot;
+        }
+        set headers [list Type $mimetype]
+    }
+    set result [my await $_chan [my put $vcard $headers]]
+    if {$result ne &quot;done&quot; || [my status] ne &quot;success&quot;}  {
+        my RaiseError &quot;Failed to send business card.&quot;
+    }
+    return [my pull_card $_chan]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::opp::Client::pull_card'>pull_card</a><span class='ns_scope'> [<a href="obex-obex-opp.html#::obex::opp::Client" title="::obex::opp::Client" class='ruff_cmd'>::obex::opp::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Retrieves the business card from the device.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT pull_card</span> <br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>chan</code></td><td>Channel connected to the device.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>The method is synchronous and will raise an error on failure. The <a href="obex-obex.html#::obex::Client::clear" title="::obex::Client.clear" class='ruff_cmd'>::obex::Client.clear</a> method must be called in case of error before further methods are called on the object.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the business card in vCard format.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_47' href="javascript:toggleSource('47')">Show source</a></p>
+<div id='47' class='ruff_dyn_src'><pre>method pull_card {} {
+
+    # Retrieves the business card from the device.
+    #  chan - Channel connected to the device.
+    #
+    # The method is synchronous and will raise an error on failure.
+    # The [::obex::Client.clear] method must be called in case of error before
+    # further methods are called on the object.
+    #
+    # Returns the business card in vCard format.
+
+    my EnsureConnected
+    set headers [list Type &quot;text/x-vcard\0&quot;]
+    set result [my await $_chan [my get $headers]]
+    if {$result eq &quot;done&quot; &amp;&amp; [my status] eq &quot;success&quot;}  {
+        return [join [my bodies]]
+    } else {
+        my RaiseError &quot;Failed to pull business card.&quot;
+    }
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::opp::Client::push_file'>push_file</a><span class='ns_scope'> [<a href="obex-obex-opp.html#::obex::opp::Client" title="::obex::opp::Client" class='ruff_cmd'>::obex::opp::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex-opp.html#::obex::opp::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Pushes the specified file over the given channel.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT push_file</span> <span class='ruff_arg'>path ?mimetype?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>path</code></td><td>Local path to the file.</td></tr>
+<tr><td><code>mimetype</code></td><td>The MIME type for the file. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>Establishes an OBEX connection to the server if one does not already exist and sends the content of the file. The base name of the file is passed as the object name. The action taken by the server on receiving the file is implementation dependent. In most cases, the server will store the file in the current default location.</p>
+<p class='ruff'>Some OBEX servers will not accept files if the file extension is not known to them. In such cases, the MIME type must be passed in.</p>
+<p class='ruff'>The method is synchronous and will block until completion and will raise an error if the transfer was not successful. The <a href="obex-obex.html#::obex::Client::clear" title="::obex::Client.clear" class='ruff_cmd'>::obex::Client.clear</a> method must be called in the latter case before any further methods are called on the object.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_48' href="javascript:toggleSource('48')">Show source</a></p>
+<div id='48' class='ruff_dyn_src'><pre>method push_file {path {mimetype {}}} {
+
+    # Pushes the specified file over the given channel.
+    #  path - Local path to the file.
+    #  mimetype - The MIME type for the file.
+    # Establishes an OBEX connection to the server if one does not
+    # already exist and sends the content of the file.
+    # The base name of the file is passed as the object name.
+    # The action taken by the server on receiving the file is
+    # implementation dependent. In most cases, the server will store
+    # the file in the current default location.
+    #
+    # Some OBEX servers will not accept files if the file extension
+    # is not known to them. In such cases, the MIME type must be
+    # passed in.
+    #
+    # The method is synchronous and will block until completion and will
+    # raise an error if the transfer was not successful. The
+    # [::obex::Client.clear] method must be called in the latter case before
+    # any further methods are called on the object.
+    #
+
+    set file_size [file size $path]
+    set from [open $path rb]
+
+    try {
+        my EnsureConnected
+
+        # Most often transfer packet size will be 64K. So
+        # So make chunk size a little less to allow for headers.
+        # We pass in the Length header because my Redmi File Manager
+        # mandates it (otherwise server internalerror is returned)
+        # although optional in the specification.
+        set headers [list Name [file tail $path] Length $file_size]
+        if {$mimetype ne &quot;&quot;} {
+            # Mimetype header is supposed to have a terminating \0.
+            # Add one if not present
+            if {[string index $mimetype end] ne &quot;\0&quot;} {
+                append mimetype &quot;\0&quot;
+            }
+            lappend headers Type $mimetype
+        }
+        while {1} {
+            set chunk [read $from 65000]
+            set result [my Await $_chan [my put_stream $chunk $headers]]
+            if {$result ne &quot;writable&quot;} {
+                break
+            }
+            set headers {}
+        }
+        if {$result eq &quot;done&quot; &amp;&amp; [my status] eq &quot;success&quot;}  {
+            return
+        } else {
+            my RaiseError &quot;File push failed.&quot;
+        }
+    } finally {
+        close $from
+    }
+}</pre></div>
+</div></main><nav class='ruff-nav'><ul ><li class='ruff-toc1'><a style='padding-top:2px;' href='obex.html'>Start page</a></li>
+<li class='ruff-toc1'><a href='obex-docindex.html' accesskey='i'>Index</a></li>
+<hr>
+<li class='ruff-toc1'><a href='obex-obex.html'>obex</a></li>
+<li class='ruff-toc1'><a href='obex-obex-core.html'>obex::core</a></li>
+<li class='ruff-toc1'><a class='ruff-highlight' href='obex-obex-opp.html'>obex::opp</a></li>
+<hr><li class='ruff-toc1'><a href='#::obex::opp'>obex::opp</a></li><li class='ruff-toc2'><a href='#::obex::opp-Commands'>Commands</a></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-opp.html#::obex::opp::bt_uuid'>bt_uuid</a><span class='ruff-tiptext'>Returns the Bluetooth UUID for the service class for the Object Push Profile.
+</span></li><li class='ruff-toc2'><a href='#::obex::opp-Classes'>Classes</a></li><li class='ruff-toc3'><a href='obex-obex-opp.html#::obex::opp::Client'>Client</a></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::constructor'>constructor</a><span class='ruff-tiptext'>Creates a client object for the OBEX Object Push Profile.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::close'>close</a><span class='ruff-tiptext'>Closes an OBEX connection.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::exchange_cards'>exchange_cards</a><span class='ruff-tiptext'>Exchanges business cards with a device.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::pull_card'>pull_card</a><span class='ruff-tiptext'>Retrieves the business card from the device.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::push_file'>push_file</a><span class='ruff-tiptext'>Pushes the specified file over the given channel.
+</span></li></ul></nav><footer class='ruff-layout-footer ruff-ft'><div style='float: right;'>Document generated by <a href='https://ruff.magicsplat.com'>Ruff!</a></div><div>&copy; Ashok P. Nadkarni</div></footer>
+</div></body></html>

@@ -1,0 +1,1258 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Obex</title>
+<link rel='stylesheet' type='text/css' href='assets/ruff-min.css' />
+<script type='text/javascript' src='assets/ruff-min.js'></script>
+</head>
+<body>
+<div class='ruff-layout'>
+<header class='ruff-layout-header ruff-hd'>
+<a style='text-decoration:none;' href='obex.html'>Obex (v0.1)</a>
+
+
+            <div id="ruffButtonBar">
+            <button id="ruffNavMove" onclick="ruffMoveNavPane()"></button>
+            <button id="ruffToggleTheme" onclick="ruffNextTheme()"></button>
+            </div>
+        </header><main class='ruff-layout-main ruff-bd'><h1 class='ruff'><a name='::obex'></a>::obex<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h1>
+<div style='clear:both;'></div>
+<p class='ruff'>The <code>obex</code> namespace contains the <a href="obex-obex.html#::obex::Client" title="Client" class='ruff_cmd'>Client</a> and <a href="obex-obex.html#::obex::Server" title="Server" class='ruff_cmd'>Server</a> classes which implement the <code>Generic Object Exchange Profile (GOEP)</code> on which all other OBEX profiles are based. These classes may be used to access or provide any OBEX based service but require the application to have more knowledge of the profile with which that service is compliant. The profile-specific classes are easier to use in that regard.</p>
+<table class='ruff_deflist'>
+<tr><td><a href="obex-obex.html#::obex::Client" title="Client" class='ruff_cmd'>Client</a></td><td>Implements GOEP client functionality.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Server" title="Server" class='ruff_cmd'>Server</a></td><td>Implements GOEP server functionality.</td></tr>
+</table>
+<h2 class='ruff'><a name='::obex-OBEX operations'></a>OBEX operations<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<div style='clear:both;'></div>
+<p class='ruff'>An OBEX operation consists of the client making one of the requests in the table below by calling the method of the same name. This is the request phase during which multiple packets may be exchanged with the server. The exchange then enters the response phase in which the server responds to the request via another multiple packet exchange. A single request may be in progress on a single transport connection at a time.</p>
+<table class='ruff_deflist'>
+<tr><td><code>connect</code></td><td>Initiate a conversation and establish context.</td></tr>
+<tr><td><code>disconnect</code></td><td>Terminate a conversation.</td></tr>
+<tr><td><code>put</code></td><td>Send an object to the server.</td></tr>
+<tr><td><code>get</code></td><td>Retrieve an object from the server.</td></tr>
+<tr><td><code>setpath</code></td><td>Sets the object directory location on the server.</td></tr>
+<tr><td><code>session</code></td><td>Used for reliable session support over unreliable transports. Not supported by the <code>obex</code> package.</td></tr>
+<tr><td><code>abort</code></td><td>Special request sent to abort an ongoing request.</td></tr>
+</table>
+<p class='ruff'>The normal mode of operation consists of a sequence of requests starting with a <code>connect</code>, ending with a <code>disconnect</code>, and one or more of the other requests in between. Note that the <code>connect</code> and <code>disconnect</code> are optional for some some servers which will accept the <code>put</code> and <code>get</code> requests without a preceding <code>connect</code>.</p>
+<h2 class='ruff'><a name='::obex-Packet transfer model'></a>Packet transfer model<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<div style='clear:both;'></div>
+<p class='ruff'>The <a href="obex.html#The_OBEX_Session_protocol" >OBEX session protocol</a> allows for one request at a time. This one request may result in multiple packets in both directions that need to be processed for the request to be completed. Rather than carrying out this communications itself, the <a href="obex-obex.html#::obex::Client" title="Client" class='ruff_cmd'>Client</a> and <a href="obex-obex.html#::obex::Server" title="Server" class='ruff_cmd'>Server</a> objects depend on the application itself to do the actual packet transfer. This makes the implementation independent of the channels, whether synchronous or event-driven I/O is used and so on. For all it knows, the data is transferred by encapsulating in E-mail.</p>
+<h3 class='ruff'><a name='::obex-Generating requests'></a>Generating requests<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>From the client side, a request to connect looks as below:</p>
+<pre class='ruff'>
+obex::Client create Client
+lassign [client connect] step data
+while {$step eq &quot;continue&quot;} {
+    if {[string length $data]} {
+        ...send $data to server...
+    }
+    set reply [...get data from server..]
+    lassign [client input $reply]
+}
+if {$step eq &quot;done&quot;} {
+    # Operation completed. Check if successful.
+    if {[client status] eq &quot;success&quot;} {
+        ... handle success ...
+    } else {
+        ... handle error ...
+    }
+} else {
+    # assert $step == &quot;failed&quot;. Operation could not be completed.
+    ... Handle bad news ...
+}
+</pre>
+<p class='ruff'>Although this fragment used the <code>connect</code> operation, the model is exactly the same for other operations such as <code>get</code>, <code>put</code> etc. All the methods that implement these operations return a pair consisting of the next step to take and optionally data to send to the server. The application then sends data, if any, to the server. Then if the step value was <code>continue</code>, application needs to read additional data and feed whatever it gets (at least one byte) to the <a href="obex-obex.html#::obex::Client::input" title="Client.input" class='ruff_cmd'>Client.input</a> method. This step is repeated as long as the <code>input</code> method returns <code>continue</code>. At any state, a method may return <code>done</code> indicating all communication is over and the request completed or <code>failed</code> indicated the request could not be completed. <strong>Note that <code>done</code> only indicates the operation was completed, not that it was successful.</strong> More on this in <a href="obex-obex.html#::obex-Request completion status" title="Request completion status" >Request completion status</a>.</p>
+<p class='ruff'>The above illustrates the conceptual model but of course the application may choose to do the equivalent non-sequentially via the event loop and non-blocking I/O.</p>
+<h3 class='ruff'><a name='::obex-Request completion status'></a>Request completion status<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>The completion of a request is indicated by a return value of <code>done</code>, <code>writable</code> or <code>failed</code> from the operation methods.</p>
+<p class='ruff'>The value <code>writable</code> is only returned in a <code>PUT</code> streaming operation to indicate the next chunk of the data stream may be sent. See <a href="obex-obex.html#::obex::Client::put_stream" title="Client.put_stream" class='ruff_cmd'>Client.put_stream</a> for details.</p>
+<p class='ruff'>The value <code>failed</code> indicates a complete response was not received from the server. The cause may be protocol version incompatibility, protocol errors, loss of connectivity and so on.</p>
+<p class='ruff'>The value <code>done</code> indicates a full and valid response was received from the server. However, this does not mean that the request itself was successful as the server response may indicate failure or some other status. This status can be checked with the <a href="obex-obex.html#::obex::Client::status" title="Client.status" class='ruff_cmd'>Client.status</a> method which returns one of the following values: <code>success</code>, <code>informational</code>, <code>redirect</code>, <code>clienterror</code>, <code>servererror</code>, <code>databaseerror</code> or <code>protocolerror</code>.</p>
+<p class='ruff'>Each request completion status value corresponds to one of several OBEX response codes from the server. The actual response code may be obtained with the <a href="obex-obex.html#::obex::Client::status_detail" title="Client.status_detail" class='ruff_cmd'>Client.status_detail</a> method. The <code>ResponseCode</code> and <code>ResponseCodeName</code> dictionary keys returned by the method contain the numeric and mnemonic values.</p>
+<p class='ruff'>A status of <code>success</code> includes the following response codes (mnemonic values shown):</p>
+<table class='ruff_deflist'>
+<tr><td><code>ok</code></td><td>Success.</td></tr>
+<tr><td><code>created</code></td><td>Object was created.</td></tr>
+<tr><td><code>accepted</code></td><td>Request accepted.</td></tr>
+<tr><td><code>nonauthoritative</code></td><td>Non-authoritative information.</td></tr>
+<tr><td><code>nocontent</code></td><td>No content.</td></tr>
+<tr><td><code>resetcontent</code></td><td>Reset content.</td></tr>
+<tr><td><code>partialcontent</code></td><td>Partial content.</td></tr>
+</table>
+<p class='ruff'>A status of <code>informational</code> includes the following response codes:</p>
+<table class='ruff_deflist'>
+<tr><td><code>continue</code></td><td>Client should send next packet in the request. This is internally handled by the package.</td></tr>
+</table>
+<p class='ruff'>A status of <code>redirect</code> includes the following response codes and indicates the resource or object is available elsewhere or by some other means.</p>
+<table class='ruff_deflist'>
+<tr><td><code>multiplechoices</code></td><td>Multiple choices.</td></tr>
+<tr><td><code>movedpermanently</code></td><td>Moved permanently.</td></tr>
+<tr><td><code>movedtemporarily</code></td><td>Moved temporarily.</td></tr>
+<tr><td><code>seeother</code></td><td>See other.</td></tr>
+<tr><td><code>notmodified</code></td><td>Not modified.</td></tr>
+<tr><td><code>useproxy</code></td><td>Use proxy.</td></tr>
+</table>
+<p class='ruff'>A status of <code>protocolerror</code> includes the following response codes:</p>
+<table class='ruff_deflist'>
+<tr><td><code>protocolerror</code></td><td>Generated internally by the <code>obex</code> package if a protocol error occured. It does not actually map to a OBEX response.</td></tr>
+</table>
+<p class='ruff'>A status of <code>clienterror</code> indicates an error by the client in its request. It includes the following response codes:</p>
+<table class='ruff_deflist'>
+<tr><td><code>badrequest</code></td><td>Bad request. Server could not understand request.</td></tr>
+<tr><td><code>unauthorized</code></td><td>Unauthorized.</td></tr>
+<tr><td><code>paymentrequired</code></td><td>Payment required.</td></tr>
+<tr><td><code>forbidden</code></td><td>Forbidden. Request understood but denied.</td></tr>
+<tr><td><code>notfound</code></td><td>Not found.</td></tr>
+<tr><td><code>methodnotallowed</code></td><td>Method not allowed.</td></tr>
+<tr><td><code>notacceptable</code></td><td>Request not acceptable.</td></tr>
+<tr><td><code>proxyauthenticationrequired</code></td><td>Proxy authentication required.</td></tr>
+<tr><td><code>requesttimeout</code></td><td>Request timed out.</td></tr>
+<tr><td><code>conflict</code></td><td>Conflict.</td></tr>
+<tr><td><code>gone</code></td><td>Gone.</td></tr>
+<tr><td><code>lengthrequired</code></td><td>Length required.</td></tr>
+<tr><td><code>preconditionfailed</code></td><td>Precondition failed.</td></tr>
+<tr><td><code>requestedentitytoolarge</code></td><td>Requested entity too large.</td></tr>
+<tr><td><code>requesturltoolarge</code></td><td>Request URL too large.</td></tr>
+<tr><td><code>unsupportedmediatype</code></td><td>Unsupported media.</td></tr>
+</table>
+<p class='ruff'>A status of <code>servererror</code> indicates an error on the server in responding to a request and includes the following response codes:</p>
+<table class='ruff_deflist'>
+<tr><td><code>internalservererror</code></td><td>Internal server error.</td></tr>
+<tr><td><code>notimplemented</code></td><td>Not implemented.</td></tr>
+<tr><td><code>badgateway</code></td><td>Bad gateway.</td></tr>
+<tr><td><code>serviceunavailable</code></td><td>Service unavailable.</td></tr>
+<tr><td><code>gatewaytimeout</code></td><td>Gateway timed out.</td></tr>
+<tr><td><code>httpversionnotsupported</code></td><td>Version not supported.</td></tr>
+</table>
+<p class='ruff'>A status of <code>databaseerror</code> includes the following response codes:</p>
+<table class='ruff_deflist'>
+<tr><td><code>databasefull</code></td><td>Database full.</td></tr>
+<tr><td><code>databaselocked</code></td><td>Database locked.</td></tr>
+</table>
+<h3 class='ruff'><a name='::obex-Synchronous completion'></a>Synchronous completion<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>As a convenience most suitable for interactive use, the <a href="obex-obex.html#::obex::Client::await" title="Client.await" class='ruff_cmd'>Client.await</a> method can be used instead of the above idiom to synchronously wait for a request to complete. The equivalent of the above example would be</p>
+<pre class='ruff'>
+set status [client await $chan [client connect]]
+if {$status eq &quot;done&quot;} {
+    ...
+} else {
+    ...
+}
+
+</pre>
+<p class='ruff'>This runs the &quot;continue&quot; loop shown previously internally until the request succeeds or fails. The disadvantage of this method is that it will block the event loop until completion and offers no protection against timeouts, a non-responsive server and other such errors.</p>
+<h3 class='ruff'><a name='::obex-Channel configuration'></a>Channel configuration<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>OBEX is a binary protocol. Any channels used to pass data should therefore be configured to be in binary mode. Moreover, because OBEX packets are small and never have more than one outstanding, buffering should be turned off.</p>
+<pre class='ruff'>
+chan configure $chan -translation binary -buffering none
+</pre>
+<h3 class='ruff'><a name='::obex-Generating responses'></a>Generating responses<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>[TBD] <em>Server not implemented</em></p>
+<h3 class='ruff'><a name='::obex-OBEX headers'></a>OBEX headers<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>The actual object itself, and any related metadata about it, is transferred in OBEX packets as a sequence of <em>headers</em>. For example, in a file transfer using <code>get</code> operations, the request may contain a <code>Name</code> header specifying the requested file while the response would include <code>Body</code> and <code>Timestamp</code> headers containing the file content and time of creation respectively.</p>
+<p class='ruff'>The headers that allowed a OBEX conversation and the context in which they are used are defined by the <a href="obex.html#OBEX profiles" title="profile" >profile</a> followed by the application.</p>
+<p class='ruff'>A header consists of two parts:</p>
+<ul class='ruff'>
+<li>The <em>header identifier</em> which specifies both the type and the semantics of the header.</li>
+<li>The <em>header value</em> whose format is fully defined by the header identifier.</li>
+</ul>
+<p class='ruff'>Header values may be a string, a binary (sequence of bytes), a 8-bit value or a 32-bit value. When passing header values into <code>obex</code> commands, the caller has to ensure the value is formatted appropriately. For strings and integers, this is straightforward. For byte sequences, caller must ensure the value is generated as a binary using the <code>binary format</code> or <code>encoding convertto</code> commands, read from a binary channel and so on.</p>
+<p class='ruff'>The table below shows the header identifiers.</p>
+<table class='ruff_deflist'>
+<tr><td>AppParameters</td><td>Byte sequence. Used by layered applications to include additional information in a request or response. The value is a byte sequence of (tag,length,value) triples where tag and length are one byte each. Tags and semantics are defined by the application.</td></tr>
+<tr><td>AuthChallenge</td><td>Byte sequence. Authentication challenge.</td></tr>
+<tr><td>AuthResponse</td><td>Byte sequence. Authentication response.</td></tr>
+<tr><td>Body</td><td>Byte sequence. A chunk of the object content.</td></tr>
+<tr><td>ConnectionId</td><td>32-bit. The connection id used when multiplexing multiple OBEX connections over one transport connection.</td></tr>
+<tr><td>Count</td><td>32-bit. Number of objects involved in the operation.</td></tr>
+<tr><td>CreatorId</td><td>32-bit. Unsigned integer that identifies the creator of an object.</td></tr>
+<tr><td>Description</td><td>String. Describes the object or provides additional information about the operation, errors etc.</td></tr>
+<tr><td>EndOfBody</td><td>Byte sequence. The last chunk of the object content.</td></tr>
+<tr><td>Http</td><td>Byte sequence. This has the same format as HTTP 1.x headers and should be parsed as HTTP headers with the same semantics.</td></tr>
+<tr><td>Length</td><td>32-bit. Length of object in bytes.</td></tr>
+<tr><td>Name</td><td>String. Name of the object, e.g. a file name.</td></tr>
+<tr><td>ObjectClass</td><td>Byte sequence. Similar in function to the <code>Type</code> header except the scope of the semantics are specific to the layered application.</td></tr>
+<tr><td>SessionParameters</td><td>Byte sequence. Parameters in <code>session</code> commands.</td></tr>
+<tr><td>SessionSequenceNumber</td><td>8-bit. Used for sequencing packets in a session.</td></tr>
+<tr><td>Target</td><td>Byte sequence. Specifies the service to process a request. Must be the first header in a request packet if present and cannot be used together with the <code>ConnectionId</code> header within a <strong>request</strong>.</td></tr>
+<tr><td>Timestamp</td><td>Byte sequence. Represents time of last modification of the object. This should be in ISO 8601 format as <code>YYYYMMDDTHHMMSS</code> for local time and <code>YYYYMMDDTHHMMSSZ</code> for UTC. Note this is a byte sequence and <strong>not</strong> a string.</td></tr>
+<tr><td>Timestamp4</td><td>32-bit. Represents time of last modification as number of seconds since January 1, 1970.</td></tr>
+<tr><td>Type</td><td>Byte sequence. Describes the type of the object in the same manner as HTTP's <code>Content-Header</code> header. The value is a byte sequence of ASCII characters terminated by a null, <strong>not</strong> a string.</td></tr>
+<tr><td>WanUuid</td><td>Byte sequence. Only used in stateless networks environments where the OBEX server resides on network client with the OBEX client residing on the network server. The OBEX server (the network client) then includes this in all responses.</td></tr>
+<tr><td>Who</td><td>Byte sequence. Similar to the <code>Target</code> header except that while <code>Target</code> in a request identifies the desired service, <code>Who</code> in a response identifies the service generating the response.</td></tr>
+</table>
+<h2 class='ruff'><a name='::obex-Classes'></a>Classes<span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<div style='clear:both;'></div>
+<h3 class='ruffclass'><a name='::obex::Client'>Client</a><span class='ns_scope'> [<a href="obex-obex.html#::obex" title="::obex" class='ruff_cmd'>::obex</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<h5 class='ruff'>Method summary</h5><table class='ruff_deflist'>
+<tr><td><a href="obex-obex.html#::obex::Client::constructor" title="constructor" class='ruff_cmd'>constructor</a></td><td>Constructor for the class.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::abort" title="abort" class='ruff_cmd'>abort</a></td><td>Generates a Obex <code>ABORT</code> request.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::await" title="await" class='ruff_cmd'>await</a></td><td>Synchronously completes an ongoing operation.</td></tr>
+<tr><td><code>bodies</code></td><td>See <a href="obex-obex.html#::obex::Helper::bodies" title="Helper.bodies" class='ruff_cmd'>Helper.bodies</a></td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::clear" title="clear" class='ruff_cmd'>clear</a></td><td>Clears error state if any.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::connect" title="connect" class='ruff_cmd'>connect</a></td><td>Generates a Obex connect request.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::connected" title="connected" class='ruff_cmd'>connected</a></td><td>Returns 1 if the client has an OBEX connection active.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::disconnect" title="disconnect" class='ruff_cmd'>disconnect</a></td><td>Generates a Obex disconnect request.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::get" title="get" class='ruff_cmd'>get</a></td><td>Generates a Obex <code>GET</code> request.</td></tr>
+<tr><td><code>headers</code></td><td>See <a href="obex-obex.html#::obex::Helper::headers" title="Helper.headers" class='ruff_cmd'>Helper.headers</a></td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::idle" title="idle" class='ruff_cmd'>idle</a></td><td>Returns 1 if another request can be issued, otherwise 0.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a></td><td>Process data from the remote server.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::put" title="put" class='ruff_cmd'>put</a></td><td>Generates a Obex <code>PUT</code> request.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::put_delete" title="put_delete" class='ruff_cmd'>put_delete</a></td><td>Generates a Obex <code>PUT</code> request to delete an object.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::put_stream" title="put_stream" class='ruff_cmd'>put_stream</a></td><td>Generates a Obex <code>PUT</code> request with content provided in chunks.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::reset" title="reset" class='ruff_cmd'>reset</a></td><td>Resets state of the object.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::response" title="response" class='ruff_cmd'>response</a></td><td>Returns the last response received from the server.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::session" title="session" class='ruff_cmd'>session</a></td><td>Generate a OBEX <code>session</code> request.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::setpath" title="setpath" class='ruff_cmd'>setpath</a></td><td>Generates a Obex <code>SETPATH</code> request.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::state" title="state" class='ruff_cmd'>state</a></td><td>Returns the state of the client.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::status" title="status" class='ruff_cmd'>status</a></td><td>Returns the status of the last response received.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Client::status_detail" title="status_detail" class='ruff_cmd'>status_detail</a></td><td>Returns the detailed status of the last response received.</td></tr>
+</table>
+<h5 class='ruff'>Mixins</h5><p class='ruff'><a href="obex-obex.html#::obex::Helper" title="Helper" class='ruff_cmd'>Helper</a></p>
+<h5 class='ruff'>Subclasses</h5><p class='ruff'><a href="obex-obex-opp.html#::obex::opp::Client" title="::obex::opp::Client" class='ruff_cmd'>::obex::opp::Client</a></p>
+<h4 class='ruffmethod'><a name='::obex::Client::constructor'>constructor</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>Client create OBJNAME</span> <span class='ruff_arg'>?args?</span><br><span class='ruff_cmd'>Client new</span> <span class='ruff_arg'>?args?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+</table>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_1' href="javascript:toggleSource('1')">Show source</a></p>
+<div id='1' class='ruff_dyn_src'><pre>method constructor {args} {
+
+    namespace path [linsert [namespace path] end ::obex ::obex::core]
+    my reset
+    if {[llength [self next]]} {
+        next {*}$args
+    }
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::abort'>abort</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generates a Obex <code>ABORT</code> request.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT abort</span> <span class='ruff_arg'>?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>It is the caller's responsibility to ensure the value associated with the header is formatted as described in <a href="obex-obex.html#::obex-OBEX headers" title="OBEX headers" >OBEX headers</a> and that the supplied headers if valid for <code>ABORT</code> requests. The <code>ConnectionId</code> header is automatically generated as needed and should not be included by the caller.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first of which is either <code>continue</code> or <code>failed</code>, and the second, if present, is data to be sent to the server. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> for details.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_2' href="javascript:toggleSource('2')">Show source</a></p>
+<div id='2' class='ruff_dyn_src'><pre>method abort {{headers {}}} {
+
+    # Generates a Obex `ABORT` request.
+    #  headers - List of alternating header names and values.
+    #
+    # It is the caller's responsibility to ensure the value associated
+    # with the header is formatted as described in [OBEX headers] and
+    # that the supplied headers if valid for `ABORT` requests.
+    # The `ConnectionId` header is automatically generated as needed
+    # and should not be included by the caller.
+    #
+    # Returns a list of one or two elements, the first of which is either
+    # `continue` or `failed`, and the second, if present, is data to be sent
+    # to the server. See [input] for details.
+
+    my BeginRequest abort
+    set state(headers_out) [header encoden $headers]
+    set packet [my OutgoingPacket 0xff 0]
+    # Check if all headers were accomodated
+    if {[llength $state(headers_out)]} {
+        # Not all headers fit. Abort request must be a single packet
+        my RaiseError &quot;Headers too long for abort request.&quot;
+    }
+    return [list continue $packet]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::await'>await</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Synchronously completes an ongoing operation.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT await</span> <span class='ruff_arg'>chan action_state</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>chan</code></td><td>A Tcl channel for communicating with the server. This must not be multiplexed with other requests.</td></tr>
+<tr><td><code>action_state</code></td><td>The return value from a method that returns an action state such as <a href="obex-obex.html#::obex::Client::connect" title="connect" class='ruff_cmd'>connect</a>, <a href="obex-obex.html#::obex::Client::disconnect" title="disconnect" class='ruff_cmd'>disconnect</a>, <a href="obex-obex.html#::obex::Client::get" title="get" class='ruff_cmd'>get</a>, <a href="obex-obex.html#::obex::Client::put" title="put" class='ruff_cmd'>put</a>, <a href="obex-obex.html#::obex::Client::put_delete" title="put_delete" class='ruff_cmd'>put_delete</a>, <a href="obex-obex.html#::obex::Client::put_stream" title="put_stream" class='ruff_cmd'>put_stream</a>, <a href="obex-obex.html#::obex::Client::setpath" title="setpath" class='ruff_cmd'>setpath</a>, <a href="obex-obex.html#::obex::Client::abort" title="abort" class='ruff_cmd'>abort</a> or <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>The method places the passed channel into binary blocking mode and uses it to communicate with the server to complete all remaining steps required for the operation to complete. The original modes are restored before returning.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns <code>done</code>, <code>writable</code> or <code>failed</code>. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a>. Note the method will not return <code>continue</code>.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_3' href="javascript:toggleSource('3')">Show source</a></p>
+<div id='3' class='ruff_dyn_src'><pre>method await {chan action_state} {
+
+    # Synchronously completes an ongoing operation.
+    #  chan - A Tcl channel for communicating with the server. This
+    #    must not be multiplexed with other requests.
+    #  action_state - The return value from a method that returns
+    #    an action state such as [connect], [disconnect], [get],
+    #    [put], [put_delete], [put_stream], [setpath], [abort] or [input].
+    #
+    # The method places the passed channel into binary blocking mode and
+    # uses it to communicate with the server to complete all remaining
+    # steps required for the operation to complete. The original modes are
+    # restored before returning.
+    #
+    # Returns `done`, `writable` or `failed`. See [input]. Note the
+    # method will not return `continue`.
+
+    set chan_config [chan configure $chan]
+    chan configure $chan -blocking 1 -buffering none  -translation binary
+    try {
+        return [my Await $chan $action_state]
+    } finally {
+        # Restore original config. Note -encoding and -eofchar
+        # need explicitly set as -translation binary above
+        # changes them but not changed back by -translation below.
+        chan configure $chan  -blocking [dict get $chan_config -blocking]  -buffering [dict get $chan_config -buffering]  -encoding [dict get $chan_config -encoding]  -translation [dict get $chan_config -translation]  -eofchar [dict get $chan_config -eofchar]
+    }
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::clear'>clear</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Clears error state if any.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT clear</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The object is restored to an idle state readying it for another request. The command will raise an error if called while a request is in progress.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_4' href="javascript:toggleSource('4')">Show source</a></p>
+<div id='4' class='ruff_dyn_src'><pre>method clear {} {
+
+    # Clears error state if any.
+    #
+    # The object is restored to an idle state readying it for another
+    # request. The command will raise an error if called while a request
+    # is in progress.
+    my ResetRequest
+    set state(state) IDLE
+    return
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::connect'>connect</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generates a Obex connect request.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT connect</span> <span class='ruff_arg'>?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>It is the caller's responsibility to ensure the value associated with the header is formatted as described in <a href="obex-obex.html#::obex-OBEX headers" title="OBEX headers" >OBEX headers</a> and that the supplied headers if any are acceptable in <code>connect</code> request. The following headers are commonly used in connects: <code>Target</code>, <code>Who</code>, <code>Count</code>, <code>Length</code> and <code>Description</code>.</p>
+<p class='ruff'>The method should not be called multiple times without an intervening call to <a href="obex-obex.html#::obex::Client::disconnect" title="disconnect" class='ruff_cmd'>disconnect</a>.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first of which is either <code>continue</code> or <code>failed</code>, and the second, if present, is data to be sent to the server. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> for details.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_5' href="javascript:toggleSource('5')">Show source</a></p>
+<div id='5' class='ruff_dyn_src'><pre>method connect {{headers {}}} {
+
+    # Generates a Obex connect request.
+    #  headers - List of alternating header names and values.
+    #
+    # It is the caller's responsibility to ensure the value associated
+    # with the header is formatted as described in [OBEX headers] and
+    # that the supplied headers if any are acceptable in `connect` request.
+    # The following headers are commonly used in connects:
+    # `Target`, `Who`, `Count`, `Length` and `Description`.
+    #
+    # The method should not be called multiple times without an
+    # intervening call to [disconnect].
+    #
+    # Returns a list of one or two elements, the first of which is either
+    # `continue` or `failed`, and the second, if present, is data to be sent
+    # to the server. See [input] for details.
+
+    if {$state(connected)} {
+        error &quot;Already connected.&quot;
+    }
+
+    my BeginRequest connect
+    set state(headers_out) [header encoden $headers]
+    # Packet is opcode 0x80, 2 bytes length, version (1.0-&gt;0x10),
+    # flags (0), 2 bytes max len (proposed)
+    set extra [binary format cucuSu 0x10 0 65535]
+    set packet [my OutgoingPacket 0x80 0 $extra]
+    if {[llength $state(headers_out)]} {
+        # Not all headers fit. Connect request must be a single packet
+        my RaiseError &quot;Headers too long for connect request.&quot;
+    }
+    return [list continue $packet]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::connected'>connected</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Returns 1 if the client has an OBEX connection active.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT connected</span> <br></div>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns 1 if the client has an OBEX connection active.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_6' href="javascript:toggleSource('6')">Show source</a></p>
+<div id='6' class='ruff_dyn_src'><pre>method connected {} {
+
+    # Returns 1 if the client has an OBEX connection active.
+    return $state(connected)
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::disconnect'>disconnect</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generates a Obex disconnect request.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT disconnect</span> <span class='ruff_arg'>?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>It is the caller's responsibility to ensure the value associated with the header is formatted as described in <a href="obex-obex.html#::obex-OBEX headers" title="OBEX headers" >OBEX headers</a> and that the supplied headers if valid for <code>disconnect</code> requests. The <code>ConnectionId</code> header is automatically generated as needed and shoould not be included by the caller.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first of which is either <code>continue</code> or <code>failed</code>, and the second, if present, is data to be sent to the server. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> for details.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_7' href="javascript:toggleSource('7')">Show source</a></p>
+<div id='7' class='ruff_dyn_src'><pre>method disconnect {{headers {}}} {
+
+    # Generates a Obex disconnect request.
+    #  headers - List of alternating header names and values.
+    #
+    # It is the caller's responsibility to ensure the value associated
+    # with the header is formatted as described in [OBEX headers] and
+    # that the supplied headers if valid for `disconnect` requests.
+    # The `ConnectionId` header is automatically generated as needed
+    # and shoould not be included by the caller.
+    #
+    # Returns a list of one or two elements, the first of which is either
+    # `continue` or `failed`, and the second, if present, is data to be sent
+    # to the server. See [input] for details.
+
+    if {!$state(connected)} {
+        error &quot;Not connected.&quot;
+    }
+    my BeginRequest disconnect
+    set state(headers_out) [header encoden $headers]
+    set packet [my OutgoingPacket 0x81 0]
+    # Check if all headers were accomodated
+    if {[llength $state(headers_out)]} {
+        # Not all headers fit. Disconnect request must be a single packet
+        my RaiseError &quot;Headers too long for disconnect request.&quot;
+    }
+    set state(connected) false
+    return [list continue $packet]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::get'>get</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generates a Obex <code>GET</code> request.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT get</span> <span class='ruff_arg'>?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>It is the caller's responsibility to ensure the value associated with the header is formatted as described in <a href="obex-obex.html#::obex-OBEX headers" title="OBEX headers" >OBEX headers</a> and that the supplied headers if any are acceptable in <code>put</code> request. The following headers are commonly used in put operations: <code>Name</code>, <code>Type</code>, <code>Http</code>, <code>Timestamp</code> and <code>Description</code>.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first of which is either <code>continue</code> or <code>failed</code>, and the second, if present, is data to be sent to the server. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> for details.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_8' href="javascript:toggleSource('8')">Show source</a></p>
+<div id='8' class='ruff_dyn_src'><pre>method get {{headers {}}} {
+
+    # Generates a Obex `GET` request.
+    #  headers - List of alternating header names and values.
+    #
+    # It is the caller's responsibility to ensure the value associated
+    # with the header is formatted as described in [OBEX headers] and
+    # that the supplied headers if any are acceptable in `put` request.
+    # The following headers are commonly used in put operations:
+    # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
+    #
+    # Returns a list of one or two elements, the first of which is either
+    # `continue` or `failed`, and the second, if present, is data to be sent
+    # to the server. See [input] for details.
+
+    my BeginRequest get
+    set state(headers_out) [header encoden $headers]
+    return [list continue [my OutgoingPacket 0x03 0]]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::idle'>idle</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Returns 1 if another request can be issued, otherwise 0.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT idle</span> <br></div>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns 1 if another request can be issued, otherwise 0.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_9' href="javascript:toggleSource('9')">Show source</a></p>
+<div id='9' class='ruff_dyn_src'><pre>method idle {} {
+
+    # Returns 1 if another request can be issued, otherwise 0.
+    return [expr {$state eq &quot;IDLE&quot;}]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::input'>input</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Process data from the remote server.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT input</span> <span class='ruff_arg'>data</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>data</code></td><td>Binary data as received from remote server.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>The method takes as input data received from the server as part of the response to a request. The return value from the method is a list of one or two elements. The first element is one of the following:</p>
+<table class='ruff_deflist'>
+<tr><td><code>done</code></td><td>The full response has been received. The application can then call any of the retrieval methods or initiate another request. If the second element is present and and not empty, it is data to be sent to the server. The application can call other methods to retrieve the result of the request. The application may also call methods to initiate the next request.</td></tr>
+<tr><td><code>continue</code></td><td>The response has only been partially received. If the second element is present and not empty, it is data to be sent to the server. In either case, the application should read more data from the server and invoke the <code>input</code> method again passing it the read data.</td></tr>
+<tr><td><code>writable</code></td><td>This value is only returned if the current operation was a streaming <code>put</code> operation initiated with <a href="obex-obex.html#::obex::Client::put_stream" title="put_stream" class='ruff_cmd'>put_stream</a>. It indicates that <a href="obex-obex.html#::obex::Client::put_stream" title="put_stream" class='ruff_cmd'>put_stream</a> should be called again to send the next chunk of data.</td></tr>
+<tr><td><code>failed</code></td><td>The request failed. See <a href="obex-obex.html#::obex-Request completion status" title="Request completion status" >Request completion status</a> for dealing with errors and failures. If the second element is present and not empty, it is data to be sent to the server. In either case, the application must not invoke additional requests without first calling the <a href="obex-obex.html#::obex::Client::reset" title="reset" class='ruff_cmd'>reset</a> method.</td></tr>
+</table>
+<p class='ruff'>This method will raise an exception if no request is currently outstanding.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first being one of <code>done</code>, <code>failed</code>, <code>continue</code> or <code>writable</code> and the second optional element being data to send to the server.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_10' href="javascript:toggleSource('10')">Show source</a></p>
+<div id='10' class='ruff_dyn_src'><pre>method input {data} {
+
+    # Process data from the remote server.
+    #   data - Binary data as received from remote server.
+    # The method takes as input data received from the server as part of
+    # the response to a request. The return value from the method is a list
+    # of one or two elements. The first element is one of the following:
+    #   `done`       - The full response has been received. The application
+    #                  can then call any of the retrieval methods or initiate
+    #                  another request. If the second element is present and
+    #                  and not empty, it is data to be sent to the server.
+    #                  The application can call other methods to retrieve
+    #                  the result of the request. The application may also
+    #                  call methods to initiate the next request.
+    #   `continue`   - The response has only been partially received. If
+    #                  the second element is present and not empty, it is
+    #                  data to be sent to the server. In either case, the
+    #                  application should read more data from the server
+    #                  and invoke the `input` method again passing it the
+    #                  read data.
+    #   `writable`   - This value is only returned if the current operation
+    #                  was a streaming `put` operation initiated with
+    #                  [put_stream]. It indicates that [put_stream] should
+    #                  be called again to send the next chunk of data.
+    #   `failed`     - The request failed. See [Request completion status]
+    #                  for dealing with errors and failures. If
+    #                  the second element is present and not empty, it is
+    #                  data to be sent to the server. In either case, the
+    #                  application must not invoke additional requests
+    #                  without first calling the [reset] method.
+    #
+    # This method will raise an exception if no request is currently
+    # outstanding.
+    #
+    # Returns a list of one or two elements, the first being one of
+    # `done`, `failed`, `continue` or `writable` and the second optional
+    # element being data to send to the server.
+
+    my AssertState BUSY
+
+    # Append new data to existing
+    append state(input) $data
+
+    if {! [response decode $state(input) $state(op) response]} {
+        return continue;    # Incomplete packet, need more input
+    }
+
+    # TBD - should this be a protocol error if input was longer than packet
+    # Possibly a response followed by an ABORT?
+    set state(input) [string range $state(input) [dict get $response PacketLength] end]
+
+    # If we have a connection id, the incoming one must match if present
+    if {[info exists connection_id]} {
+        if {![header find $response(Headers) ConnectionId conn_id] ||
+            $connection_id != $conn_id} {
+            # TBD - ignore mismatches for now
+        }
+    }
+
+    # Save as latest response
+    set state(response) $response
+
+    # For multipart responses, collect headers
+    lappend state(headers_in) {*}[dict get $response Headers]
+
+    # Do request-specific processing
+    return [switch -exact -- $state(op) {
+        connect    { my ConnectResponseHandler }
+        disconnect { my ResponseHandler false }
+        put        { my ResponseHandler true }
+        get        { my ResponseHandler true }
+        setpath    { my ResponseHandler false }
+        session    { error &quot;Internal error: session request.&quot;}
+        abort      { my ResponseHandler false }
+        default {
+            error &quot;Unexpected request opcode $state(op).&quot;
+        }
+    }]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::put'>put</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generates a Obex <code>PUT</code> request.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT put</span> <span class='ruff_arg'>content ?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>content</code></td><td>Content to be sent to server as-is. This must be formatted appropriately based on the <code>Type</code> header, <code>Http</code> or <code>ObjectClass</code> headers passed in. If none of these are present, the server may interpret <code>$content</code> in any manner it chooses, possibly looking at the <code>Name</code> header if present, some default handling or even rejecting the request.</td></tr>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>It is the caller's responsibility to ensure the value associated with the header is formatted as described in <a href="obex-obex.html#::obex-OBEX headers" title="OBEX headers" >OBEX headers</a> and that the supplied headers if any are acceptable in <code>put</code> request. The following headers are commonly used in put operations: <code>Name</code>, <code>Type</code>, <code>Http</code>, <code>Timestamp</code> and <code>Description</code>. The headers <code>Body</code>, <code>EndOfBody</code>, <code>Length</code> and <code>ConnectionId</code> are automatically generated and should not be passed in.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first of which is either <code>continue</code> or <code>failed</code>, and the second, if present, is data to be sent to the server. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> for details.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_11' href="javascript:toggleSource('11')">Show source</a></p>
+<div id='11' class='ruff_dyn_src'><pre>method put {content {headers {}}} {
+
+    # Generates a Obex `PUT` request.
+    #  content - Content to be sent to server as-is. This must be formatted
+    #   appropriately based on the `Type` header, `Http` or `ObjectClass`
+    #   headers passed in. If none of these are present,
+    #   the server may interpret $content in any
+    #   manner it chooses, possibly looking at the `Name` header if present,
+    #   some default handling or even rejecting the request.
+    #  headers - List of alternating header names and values.
+    #
+    # It is the caller's responsibility to ensure the value associated
+    # with the header is formatted as described in [OBEX headers] and
+    # that the supplied headers if any are acceptable in `put` request.
+    # The following headers are commonly used in put operations:
+    # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
+    # The headers `Body`, `EndOfBody`, `Length` and `ConnectionId`
+    # are automatically generated and should not be passed in.
+    #
+    # Returns a list of one or two elements, the first of which is either
+    # `continue` or `failed`, and the second, if present, is data to be sent
+    # to the server. See [input] for details.
+
+    # TBD - maybe break up content into body headers assuming body space
+    #  is packet size - packet header - connection id header. That would
+    # simplify Put method
+
+    my BeginRequest put
+    lappend headers Length [string length $content] {*}[my SplitContent $content]
+    set state(headers_out) [header encoden $headers]
+    return [list continue [my OutgoingPacket 0x02 0]]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::put_delete'>put_delete</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generates a Obex <code>PUT</code> request to delete an object.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT put_delete</span> <span class='ruff_arg'>?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>It is the caller's responsibility to ensure the value associated with the header is formatted as described in <a href="obex-obex.html#::obex-OBEX headers" title="OBEX headers" >OBEX headers</a> and that the supplied headers if any are acceptable in <code>put</code> request. The following headers are commonly used in put operations: <code>Name</code>, <code>Type</code>, <code>Http</code>, <code>Timestamp</code> and <code>Description</code>. The headers <code>Body</code>, <code>EndOfBody</code>, <code>Length</code> should not be present in a delete operation and should not be passed in. Moreover, <code>ConnectionId</code> header is automatically generated and should not be passed in.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first of which is either <code>continue</code> or <code>failed</code>, and the second, if present, is data to be sent to the server. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> for details.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_12' href="javascript:toggleSource('12')">Show source</a></p>
+<div id='12' class='ruff_dyn_src'><pre>method put_delete {{headers {}}} {
+
+    # Generates a Obex `PUT` request to delete an object.
+    #  headers - List of alternating header names and values.
+    #
+    # It is the caller's responsibility to ensure the value associated
+    # with the header is formatted as described in [OBEX headers] and
+    # that the supplied headers if any are acceptable in `put` request.
+    # The following headers are commonly used in put operations:
+    # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
+    # The headers `Body`, `EndOfBody`, `Length` should not be present
+    # in a delete operation and should not be passed in. Moreover,
+    # `ConnectionId` header is automatically generated and should not
+    # be passed in.
+    #
+    # Returns a list of one or two elements, the first of which is either
+    # `continue` or `failed`, and the second, if present, is data to be sent
+    # to the server. See [input] for details.
+
+    my BeginRequest put
+    set state(headers_out) [header encoden $headers]
+    return [list continue [my OutgoingPacket 0x02 0]]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::put_stream'>put_stream</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generates a Obex <code>PUT</code> request with content provided in chunks.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT put_stream</span> <span class='ruff_arg'>chunk ?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>chunk</code></td><td>A content chunk to be sent. An empty string indicates end of the stream. This must be formatted appropriately based on the <code>Type</code> header, <code>Http</code> or <code>ObjectClass</code> headers passed in the initial call to <code>put_stream</code>. If none of these are present, the server may interpret content in any manner it chooses, possibly looking at the <code>Name</code> header if present, some default handling or even rejecting the request.</td></tr>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Should be empty on all calls except the first. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>This is similar to the <a href="obex-obex.html#::obex::Client::put" title="put" class='ruff_cmd'>put</a> method except that it permits the caller to present the data to be sent in chunks instead of all at once. The application provides each chunk of the content in repeated calls to <code>put_stream</code>. This is more memory-efficient for large files. Only the first call initiating the <code>PUT</code> operation may specify headers. Passing an empty string indicates end of the content.</p>
+<p class='ruff'>Streaming operation is achieved through the following sequence of calls:</p>
+<ul class='ruff'>
+<li>Streaming is initiated through a call to <code>put_stream</code> which normally returns <code>continue</code> with data to send to the server.</li>
+<li>The <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> method is called with the response from the server. This returns <code>writable</code> indicating more data can be sent. The application then calls <code>put_stream</code> again with the next chunk.</li>
+<li>This <code>input</code>, <code>put_stream</code> sequence is repeated until there is no more data to send at which time the application should call <code>put_stream</code> with an empty chunk.</li>
+</ul>
+<p class='ruff'>It is the caller's responsibility to ensure the value associated with the header is formatted as described in <a href="obex-obex.html#::obex-OBEX headers" title="OBEX headers" >OBEX headers</a> and that the supplied headers if any are acceptable in <code>put</code> request. The following headers are commonly used in put operations: <code>Name</code>, <code>Type</code>, <code>Http</code>, <code>Timestamp</code> and <code>Description</code>. The headers <code>Body</code>, <code>EndOfBody</code>, and <code>ConnectionId</code> are automatically generated and should not be passed in. This method does not automatically add a <code>Length</code> header since the length is not known a priori. However, some server implementations require the <code>Length</code> header and therefore should be passed in as part of <code>$headers</code> in such cases.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first of which is either <code>continue</code> or <code>failed</code>, and the second, if present, is data to be sent to the server. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> for details.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_13' href="javascript:toggleSource('13')">Show source</a></p>
+<div id='13' class='ruff_dyn_src'><pre>method put_stream {chunk {headers {}}} {
+
+    # Generates a Obex `PUT` request with content provided in chunks.
+    #  chunk - A content chunk to be sent. An empty string indicates end
+    #   of the stream. This must be formatted
+    #   appropriately based on the `Type` header, `Http` or `ObjectClass`
+    #   headers passed in the initial call to `put_stream`.
+    #   If none of these are present,
+    #   the server may interpret content in any
+    #   manner it chooses, possibly looking at the `Name` header if present,
+    #   some default handling or even rejecting the request.
+    #  headers - List of alternating header names and values. Should
+    #   be empty on all calls except the first.
+    #
+    # This is similar to the [put] method except that it permits the
+    # caller to present the data to be sent in chunks instead of all at
+    # once. The application provides each chunk of the content in repeated
+    # calls to `put_stream`.
+    # This is more memory-efficient for large files. Only the first
+    # call initiating the `PUT` operation may specify headers. Passing
+    # an empty string indicates end of the content.
+    #
+    # Streaming operation is achieved through the following sequence of
+    # calls:
+    #
+    #  * Streaming is initiated through a call to `put_stream` which
+    #    normally returns `continue` with data to send to the server.
+    #  * The [input] method is called with the response from the server.
+    #    This returns `writable` indicating more data can be sent. The
+    #    application then calls `put_stream` again with the next chunk.
+    #  * This `input`, `put_stream` sequence is repeated until there
+    #    is no more data to send at which time the application should
+    #    call `put_stream` with an empty chunk.
+    #
+    # It is the caller's responsibility to ensure the value associated
+    # with the header is formatted as described in [OBEX headers] and
+    # that the supplied headers if any are acceptable in `put` request.
+    # The following headers are commonly used in put operations:
+    # `Name`, `Type`, `Http`, `Timestamp` and `Description`.
+    # The headers `Body`, `EndOfBody`, and `ConnectionId`
+    # are automatically generated and should not be passed in.
+    # This method does not automatically add a `Length` header since
+    # the length is not known a priori. However, some server implementations
+    # require the `Length` header and therefore should be passed in
+    # as part of $headers in such cases.
+    #
+    # Returns a list of one or two elements, the first of which is either
+    # `continue` or `failed`, and the second, if present, is data to be sent
+    # to the server. See [input] for details.
+    if {$state(state) eq &quot;IDLE&quot;} {
+        my BeginRequest put
+    } else {
+        my AssertState STREAMING
+        if {[llength $headers] != 0} {
+            my RaiseError &quot;Headers only allowed in first chunk of a data stream.&quot;
+        }
+    }
+    if {[string length $chunk] != 0} {
+        # Note no Length header as unknown!
+        lappend headers {*}[my SplitContent $chunk]
+        set state(streaming) 1
+    } else {
+        lappend headers EndOfBody {}
+        set state(streaming) 0
+        # TBD - do we need to guard against more put_stream calls
+        # after EndOfBody is sent?
+    }
+    set state(headers_out) [header encoden $headers]
+    set state(state) BUSY
+    return [list continue [my OutgoingPacket 0x02 0]]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::reset'>reset</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Resets state of the object.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT reset</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The object is placed in the same state as when it was newly constructed. All state information is lost.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_14' href="javascript:toggleSource('14')">Show source</a></p>
+<div id='14' class='ruff_dyn_src'><pre>method reset {} {
+
+    # Resets state of the object.
+    #
+    # The object is placed in the same state as when it was newly constructed.
+    # All state information is lost.
+
+    # Connection specific state
+    set state(state)  IDLE
+    set state(connected) false
+    unset -nocomplain state(connection_id)
+    unset -nocomplain state(connection_header)
+    unset -nocomplain state(target)
+    unset -nocomplain state(who)
+    set state(max_packet_len) 255; # Assume min unless remote tells otherwise
+
+    # Request specific state
+    my ResetRequest
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::response'>response</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Returns the last response received from the server.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT response</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The return value is a dictionary in the same form as returned by the <a href="obex-obex-core.html#::obex::core::response decode" title="::obex::core::response decode" class='ruff_cmd'>::obex::core::response decode</a> command.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the last response received from the server.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_15' href="javascript:toggleSource('15')">Show source</a></p>
+<div id='15' class='ruff_dyn_src'><pre>method response {} {
+
+    # Returns the last response received from the server.
+    #
+    # The return value is a dictionary in the same form as returned by
+    # the [::obex::core::response decode] command.
+    return $state(response)
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::session'>session</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generate a OBEX <code>session</code> request.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT session</span> <span class='ruff_arg'>?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>This command is not implemented.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_16' href="javascript:toggleSource('16')">Show source</a></p>
+<div id='16' class='ruff_dyn_src'><pre>method session {{headers {}}} {
+
+    # Generate a OBEX `session` request.
+    #  headers   - List of alternating header names and values.
+    # This command is not implemented.
+    error &quot;Sessions not implemented in this release.&quot;
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::setpath'>setpath</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generates a Obex <code>SETPATH</code> request.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT setpath</span> <span class='ruff_arg'>?headers? ?args?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+<tr><td><code>-nocreate</code></td><td>Do no create folder if it does not exist.</td></tr>
+<tr><td><code>-parent</code></td><td>Apply operation at the parent's level.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>It is the caller's responsibility to ensure the value associated with the header is formatted as described in <a href="obex-obex.html#::obex-OBEX headers" title="OBEX headers" >OBEX headers</a> and that the supplied headers if valid for <code>SETPATH</code> requests. The <code>ConnectionId</code> header is automatically generated as needed and shoould not be included by the caller.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of one or two elements, the first of which is either <code>continue</code> or <code>failed</code>, and the second, if present, is data to be sent to the server. See <a href="obex-obex.html#::obex::Client::input" title="input" class='ruff_cmd'>input</a> for details.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_17' href="javascript:toggleSource('17')">Show source</a></p>
+<div id='17' class='ruff_dyn_src'><pre>method setpath {{headers {}} args} {
+
+    # Generates a Obex `SETPATH` request.
+    #  headers   - List of alternating header names and values.
+    #  -parent   - Apply operation at the parent's level.
+    #  -nocreate - Do no create folder if it does not exist.
+    #
+    # It is the caller's responsibility to ensure the value associated
+    # with the header is formatted as described in [OBEX headers] and
+    # that the supplied headers if valid for `SETPATH` requests.
+    # The `ConnectionId` header is automatically generated as needed
+    # and shoould not be included by the caller.
+    #
+    # Returns a list of one or two elements, the first of which is either
+    # `continue` or `failed`, and the second, if present, is data to be sent
+    # to the server. See [input] for details.
+
+    my BeginRequest setpath
+
+    set flags 0
+    set constants 0
+    foreach opt $args {
+        switch -exact -- $opt {
+            -parent { set flags [expr {$flags | 1}] }
+            -nocreate { set flags [expr {$flags | 2}] }
+            default {
+                error &quot;Unknown option \&quot;$opt\&quot;.&quot;
+            }
+        }
+    }
+
+    set state(headers_out) [header encoden $headers]
+    set packet [my OutgoingPacket 0x85 0 [binary format cucu $flags $constants]]
+    if {[llength $state(headers_out)]} {
+        # Not all headers fit. setpath request must be a single packet
+        my RaiseError &quot;Headers too long for setpath request.&quot;
+    }
+    return [list continue $packet]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::state'>state</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Returns the state of the client.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT state</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The returned state is in the form of a dictionary with the following elements:</p>
+<table class='ruff_deflist'>
+<tr><td>State</td><td>Client state; one of <code>IDLE</code>, <code>BUSY</code> or <code>ERROR</code></td></tr>
+<tr><td>Connected</td><td>0/1 depending on whether connected or not.</td></tr>
+<tr><td>ConnectionId</td><td>The connection id. Only present if connected <strong>and</strong> remote server sent a connection id.</td></tr>
+<tr><td>MaxPacketLength</td><td>Maximum packet length negotiated.</td></tr>
+<tr><td>ErrorMessage</td><td>If present, the last error seen.</td></tr>
+</table>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the state of the client.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_18' href="javascript:toggleSource('18')">Show source</a></p>
+<div id='18' class='ruff_dyn_src'><pre>method state {} {
+
+    # Returns the state of the client.
+    #
+    # The returned state is in the form of a dictionary with the following
+    # elements:
+    #   State - Client state; one of `IDLE`, `BUSY` or `ERROR`
+    #   Connected - 0/1 depending on whether connected or not.
+    #   ConnectionId - The connection id. Only present if connected
+    #                  **and** remote server sent a connection id.
+    #   MaxPacketLength - Maximum packet length negotiated.
+    #   ErrorMessage - If present, the last error seen.
+
+    set l [list State $state(state)  Connected $state(connected)  MaxPacketLength $state(max_packet_len)]
+
+    if {[info exists state(connection_id)]} {
+        lappend l ConnectionId $state(connection_id)
+    }
+    if {[info exists state(error_message)]} {
+        lappend l ErrorMessage $state(error_message)
+    }
+
+    return $l
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::status'>status</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Returns the status of the last response received.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT status</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The returned value is one of <code>success</code>, <code>informational</code>, <code>redirect</code>, <code>clienterror</code>, <code>servererror</code>, <code>databaseerror</code> or <code>protocolerror</code>. See <a href="obex-obex.html#::obex-Request completion status" title="::obex::Request completion status" >::obex::Request completion status</a>.</p>
+<p class='ruff'>The command will raise an error if no response has been received for any request.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the status of the last response received.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_19' href="javascript:toggleSource('19')">Show source</a></p>
+<div id='19' class='ruff_dyn_src'><pre>method status {} {
+
+    # Returns the status of the last response received.
+    #
+    # The returned value is one of
+    # `success`, `informational`, `redirect`,
+    # `clienterror`, `servererror`, `databaseerror` or `protocolerror`.
+    # See [::obex::Request completion status].
+    #
+    # The command will raise an error if no response has been received
+    # for any request.
+    return [dict get $state(response) ResponseStatus]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Client::status_detail'>status_detail</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Client" title="::obex::Client" class='ruff_cmd'>::obex::Client</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Client'>Client</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Returns the detailed status of the last response received.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT status_detail</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The returned dictionary has the following keys:</p>
+<table class='ruff_deflist'>
+<tr><td>ResponseStatus</td><td>The generic status category.</td></tr>
+<tr><td>ResponseCode</td><td>The numeric response code from server.</td></tr>
+<tr><td>ResponseCodeName</td><td>Mnemonic form of <code>ResponseCode</code></td></tr>
+<tr><td>ErrorMessage</td><td>Additional human readable error status message. This key may not be present.</td></tr>
+</table>
+<p class='ruff'>For more information on values for the above keys, see <a href="obex-obex.html#::obex-Request completion status" title="::obex::Request completion status" >::obex::Request completion status</a>.</p>
+<p class='ruff'>The command will raise an error if no response has been received for any request.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the detailed status of the last response received.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_20' href="javascript:toggleSource('20')">Show source</a></p>
+<div id='20' class='ruff_dyn_src'><pre>method status_detail {} {
+
+    # Returns the detailed status of the last response received.
+    #
+    # The returned dictionary has the following keys:
+    #  ResponseStatus   - The generic status category.
+    #  ResponseCode     - The numeric response code from server.
+    #  ResponseCodeName - Mnemonic form of `ResponseCode`
+    #  ErrorMessage     - Additional human readable error status message. This
+    #                     key may not be present.
+    #
+    # For more information on values for the above keys, see
+    # [::obex::Request completion status].
+    #
+    # The command will raise an error if no response has been received
+    # for any request.
+    dict with state(response) {
+        lappend status ResponseStatus $ResponseStatus  ResponseCode $ResponseCode  ResponseCodeName [response::ResponseCodeName $ResponseCode]
+        if {[info exists state(error_message)]} {
+            lappend status ErrorMessage $state(error_message)
+        }
+    }
+    return $status
+}</pre></div>
+</div><h3 class='ruffclass'><a name='::obex::Helper'>Helper</a><span class='ns_scope'> [<a href="obex-obex.html#::obex" title="::obex" class='ruff_cmd'>::obex</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<h5 class='ruff'>Method summary</h5><table class='ruff_deflist'>
+<tr><td><a href="obex-obex.html#::obex::Helper::bodies" title="bodies" class='ruff_cmd'>bodies</a></td><td>Get the data content in a request or response.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Helper::headers" title="headers" class='ruff_cmd'>headers</a></td><td>Retrieves the content of headers of a given type.</td></tr>
+</table>
+<h5 class='ruff'>Subclasses</h5><p class='ruff'><a href="obex-obex.html#::obex::Client" title="Client" class='ruff_cmd'>Client</a>, <a href="obex-obex.html#::obex::Server" title="Server" class='ruff_cmd'>Server</a></p>
+<h4 class='ruffmethod'><a name='::obex::Helper::bodies'>bodies</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Helper" title="::obex::Helper" class='ruff_cmd'>::obex::Helper</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Helper'>Helper</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Get the data content in a request or response</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT bodies</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The data content is transferred in Obex through headers of type <code>Body</code> and <code>EndOfBody</code>. This method returns the values received through these headers as a list. The content is in binary form and needs to be appropriately interpreted depending on the application specifics. Note the content may be fragmented at arbitrary boundaries during transmission and so the returned values may need to be concatenated before operations like UTF-8 decoding.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns list of binary strings received through <code>Body</code> and <code>EndOfBody</code> headers.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_21' href="javascript:toggleSource('21')">Show source</a></p>
+<div id='21' class='ruff_dyn_src'><pre>method bodies {} {
+
+    # Get the data content in a request or response
+    #
+    # The data content is transferred in Obex through headers of type `Body`
+    # and `EndOfBody`. This method returns the values received through these
+    # headers as a list. The content is in binary form and needs to be
+    # appropriately interpreted depending on the application specifics. Note
+    # the content may be fragmented at arbitrary boundaries during
+    # transmission and so the returned values may need to be concatenated
+    # before operations like UTF-8 decoding.
+    #
+    # Returns list of binary strings received through `Body` and `EndOfBody`
+    # headers.
+
+    set bodies {}
+    foreach {name val} $state(headers_in) {
+        if {$name in {Body EndOfBody}} {
+            lappend bodies $val
+        }
+    }
+    return $bodies
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Helper::headers'>headers</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Helper" title="::obex::Helper" class='ruff_cmd'>::obex::Helper</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Helper'>Helper</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Retrieves the content of headers of a given type.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT headers</span> <span class='ruff_arg'>name</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>name</code></td><td>Name of the header.</td></tr>
+</table>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list each element of which is the value of a header</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_22' href="javascript:toggleSource('22')">Show source</a></p>
+<div id='22' class='ruff_dyn_src'><pre>method headers {name} {
+
+    # Retrieves the content of headers of a given type.
+    #  name - name of the header
+    # Returns a list each element of which is the value of a header
+    #
+    return [header findall $state(headers_in)]
+}</pre></div>
+</div><h3 class='ruffclass'><a name='::obex::Server'>Server</a><span class='ns_scope'> [<a href="obex-obex.html#::obex" title="::obex" class='ruff_cmd'>::obex</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex'>obex</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<h5 class='ruff'>Method summary</h5><table class='ruff_deflist'>
+<tr><td><a href="obex-obex.html#::obex::Server::constructor" title="constructor" class='ruff_cmd'>constructor</a></td><td>Constructor for the class.</td></tr>
+<tr><td><code>bodies</code></td><td>See <a href="obex-obex.html#::obex::Helper::bodies" title="Helper.bodies" class='ruff_cmd'>Helper.bodies</a></td></tr>
+<tr><td><a href="obex-obex.html#::obex::Server::get_request" title="get_request" class='ruff_cmd'>get_request</a></td><td>Not documented.</td></tr>
+<tr><td><code>headers</code></td><td>See <a href="obex-obex.html#::obex::Helper::headers" title="Helper.headers" class='ruff_cmd'>Helper.headers</a></td></tr>
+<tr><td><a href="obex-obex.html#::obex::Server::input" title="input" class='ruff_cmd'>input</a></td><td>Process data received from a client.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Server::reset" title="reset" class='ruff_cmd'>reset</a></td><td>Resets state of the object.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Server::respond" title="respond" class='ruff_cmd'>respond</a></td><td>Not documented.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Server::respond_content" title="respond_content" class='ruff_cmd'>respond_content</a></td><td>Generate a response containing content.</td></tr>
+<tr><td><a href="obex-obex.html#::obex::Server::state" title="state" class='ruff_cmd'>state</a></td><td>Returns the state of the server.</td></tr>
+</table>
+<h5 class='ruff'>Mixins</h5><p class='ruff'><a href="obex-obex.html#::obex::Helper" title="Helper" class='ruff_cmd'>Helper</a></p>
+<h4 class='ruffmethod'><a name='::obex::Server::constructor'>constructor</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Server" title="::obex::Server" class='ruff_cmd'>::obex::Server</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Server'>Server</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>Server create OBJNAME</span> <span class='ruff_arg'>?args?</span><br><span class='ruff_cmd'>Server new</span> <span class='ruff_arg'>?args?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+</table>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_23' href="javascript:toggleSource('23')">Show source</a></p>
+<div id='23' class='ruff_dyn_src'><pre>method constructor {args} {
+
+    namespace path [linsert [namespace path] end ::obex ::obex::core]
+    my reset
+    if {[llength [self next]]} {
+        next {*}$args
+    }
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Server::get_request'>get_request</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Server" title="::obex::Server" class='ruff_cmd'>::obex::Server</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Server'>Server</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT get_request</span> <br></div>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_24' href="javascript:toggleSource('24')">Show source</a></p>
+<div id='24' class='ruff_dyn_src'><pre>method get_request {} {
+
+    return $state(request)
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Server::input'>input</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Server" title="::obex::Server" class='ruff_cmd'>::obex::Server</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Server'>Server</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Process data received from a client.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT input</span> <span class='ruff_arg'>data</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>data</code></td><td>Binary data as received from client.</td></tr>
+</table>
+<h5 class='ruff'>Description</h5><p class='ruff'>The method takes as input data received from a client. The return value from the method is a list of one or two of one or two elements. The first element is one of <code>done</code> <code>continue</code> or <code>failed</code>. The semantics depend on whether the request is in the <strong>request</strong> phase or the <strong>response</strong> phase.</p>
+<p class='ruff'>In the <strong>request</strong> phase,</p>
+<table class='ruff_deflist'>
+<tr><td><code>done</code></td><td>The request was completed without need for an explicit response from the application. If the the second element is present and not empty, it is data to be sent to the client.</td></tr>
+<tr><td><code>respond</code></td><td>The full request has been received. The application should then call one of the response methods to reply to the client. If the second element is present and not empty, it is data to be sent to the client. The application can call other methods to retrieve the request.</td></tr>
+<tr><td><code>continue</code></td><td>The request has only been partially received. If the second element is present and not empty, it is data to be sent to the client. In either case, the application should read more data from the client and again invoke the <a href="obex-obex.html#::obex::Server::input" title="input" class='ruff_cmd'>input</a> method passing it the read data.</td></tr>
+<tr><td><code>failed</code></td><td>The request has failed. See <a href="obex-obex.html#::obex-Request completion status" title="Request completion status" >Request completion status</a> for dealing with errors and failures. If the second element is present and not empty, it is data to be sent to the client. In either case, the application must not use this instance to accept additional requests without first calling the <a href="obex-obex.html#::obex::Server::reset" title="reset" class='ruff_cmd'>reset</a> method.</td></tr>
+</table>
+<p class='ruff'>In the <strong>response</strong> phase,</p>
+<table class='ruff_deflist'>
+<tr><td><code>done</code></td><td>The full response has been sent to the client. If the second element is present and not empty, it is data to be sent to the client. The application can then process a new request using this object.</td></tr>
+<tr><td><code>continue</code></td><td>The response has only been partially sent. If the second element is present and not empty, it is data to be sent to the client. In either case, the application should read more data from the client and invoke the <a href="obex-obex.html#::obex::Server::input" title="input" class='ruff_cmd'>input</a> method again passing it the read data.</td></tr>
+<tr><td><code>failed</code></td><td>The request has failed. See <a href="obex-obex.html#::obex-Request completion status" title="Request completion status" >Request completion status</a> for dealing with errors and failures. If the second element is present and not empty, it is data to be sent to the client. In either case, the application must not use this instance to accept additional requests without first calling the <a href="obex-obex.html#::obex::Server::reset" title="reset" class='ruff_cmd'>reset</a> method.</td></tr>
+</table>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_25' href="javascript:toggleSource('25')">Show source</a></p>
+<div id='25' class='ruff_dyn_src'><pre>method input {data} {
+
+    # Process data received from a client.
+    #   data - Binary data as received from client.
+    # The method takes as input data received from a client.
+    # The return value from the method is a list of one or two
+    # of one or two elements. The first element is one of `done`
+    # `continue` or `failed`. The semantics depend on whether
+    # the request is in the **request** phase or the **response**
+    # phase.
+    #
+    # In the **request** phase,
+    #   `done`  - The request was completed without need for an explicit
+    #            response from the application. If the
+    #            the second element is present and not empty, it is data
+    #            to be sent to the client.
+    #   `respond` - The full request has been received. The application should
+    #            then call one of the response methods to reply to the client. If
+    #            the second element is present and not empty, it is data
+    #            to be sent to the client. The application can call other
+    #            methods to retrieve the request.
+    #   `continue` - The request has only been partially received. If the
+    #            second element is present and not empty, it is data to be
+    #            sent to the client. In either case, the application should
+    #            read more data from the client and again invoke the [input]
+    #            method passing it the read data.
+    #   `failed` - The request has failed. See [Request completion status] for dealing
+    #            with errors and failures. If the second element is present
+    #            and not empty, it is data to be sent to the client. In
+    #            either case, the application must not use this instance
+    #            to accept additional requests without first calling the
+    #            [reset] method.
+    #
+    # In the **response** phase,
+    #   `done` - The full response has been sent to the client.
+    #            If the second element is present and not empty, it is data
+    #            to be sent to the client. The application can then
+    #            process a new request using this object.
+    #   `continue` - The response has only been partially sent. If the
+    #            second element is present and not empty, it is data to be
+    #            sent to the client. In either case, the application should
+    #            read more data from the client and invoke the [input] method
+    #            again passing it the read data.
+    #   `failed` - The request has failed. See [Request completion status] for dealing
+    #            with errors and failures. If the second element is present
+    #            and not empty, it is data to be sent to the client. In
+    #            either case, the application must not use this instance
+    #            to accept additional requests without first calling the
+    #            [reset] method.
+    #
+
+    switch -exact -- $state(state) {
+        IDLE -
+        REQUEST { my RequestPhaseInput $data}
+        RESPOND { my ResponsePhaseInput $data}
+        ERROR   { error &quot;Method must not be called after an error without calling the reset method first.&quot;}
+        default { error &quot;Internal error: unknown state $state(state)&quot;}
+    }
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Server::reset'>reset</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Server" title="::obex::Server" class='ruff_cmd'>::obex::Server</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Server'>Server</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Resets state of the object.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT reset</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The object is placed in the same state as when it was newly constructed. All state information is lost.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_26' href="javascript:toggleSource('26')">Show source</a></p>
+<div id='26' class='ruff_dyn_src'><pre>method reset {} {
+
+    # Resets state of the object.
+    #
+    # The object is placed in the same state as when it was newly constructed.
+    # All state information is lost.
+
+    # Connection specific state
+    set state(state)  IDLE
+    unset -nocomplain state(connection_id); # Set when connect comes in
+    unset -nocomplain state(connection_header)
+    set state(max_packet_len) 255; # Assume min until remote tells otherwise
+
+    # Request specific state
+    my ResetRequest
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Server::respond'>respond</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Server" title="::obex::Server" class='ruff_cmd'>::obex::Server</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Server'>Server</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT respond</span> <span class='ruff_arg'>status ?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>status</code></td><td>Not documented.</td></tr>
+<tr><td><code>headers</code></td><td>Not documented. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_27' href="javascript:toggleSource('27')">Show source</a></p>
+<div id='27' class='ruff_dyn_src'><pre>method respond {status {headers {}}} {
+
+    my AssertState RESPOND
+
+    set state(headers_out) [header encoden $headers]
+    set status [response::ResponseCode $status]
+    set state(response_code) $status
+
+    # CONNECT and DISCONNECT need special handling.
+    set op [dict get $state(request) OpName]
+    if {$op eq &quot;connect&quot;} {
+        set state(max_packet_len) [dict get $state(request) MaxLength]
+        set state(connection_id) [GenerateId]
+        set state(connection_header)  [header encode ConnectionId $state(connection_id)]
+        set state(headers_out) $headers
+        # Packet is opcode 0x80, 2 bytes length, version (1.0-&gt;0x10),
+        # flags (0), 2 bytes max len
+        set extra_fields [binary format cucuSu 0x10 0 $state(max_packet_len)]
+    } elseif {$op eq &quot;disconnect&quot;} {
+        set extra_fields &quot;&quot;
+        unset -nocomplain state(connection_id)
+        unset -nocomplain state(connection_header)
+        set state(max_packet_len) 255
+    } else {
+        set extra_fields &quot;&quot;
+    }
+
+    # TBD - assume a single packet response
+    set status [expr {$status | 0x80}]
+    set packet [my OutgoingPacket $status 1 $extra_fields]
+    if {[llength $state(headers_out)]} {
+        # TBD - don't know exactly how multipacket responses work when
+        # status is not continue.
+        my RaiseError &quot;Response does not fit in a packet.&quot;
+    }
+    return [list done $packet]
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Server::respond_content'>respond_content</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Server" title="::obex::Server" class='ruff_cmd'>::obex::Server</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Server'>Server</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Generate a response containing content.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT respond_content</span> <span class='ruff_arg'>content ?headers?</span><br></div>
+<h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
+<tr><td><code>content</code></td><td>Content to include in the response to the client.</td></tr>
+<tr><td><code>headers</code></td><td>List of alternating header names and values. Optional, default <code>&quot;&quot;</code>.</td></tr>
+</table>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_28' href="javascript:toggleSource('28')">Show source</a></p>
+<div id='28' class='ruff_dyn_src'><pre>method respond_content {content {headers {}}} {
+
+    # Generate a response containing content.
+    #  content - content to include in the response to the client.
+    #  headers - List of alternating header names and values.
+    #
+    my AssertState RESPOND
+    lappend headers Length [string length $content] {*}[my SplitContent $content]
+    set state(headers_out) [header encoden $headers]
+    set state(response_code) $status
+    set packet [my OutgoingPacket $state(response_code) 1]
+    if {[llength $state(headers_out)]} {
+        return [list continue $packet]
+    } else {
+        return [list done $packet]
+    }
+}</pre></div>
+</div><h4 class='ruffmethod'><a name='::obex::Server::state'>state</a><span class='ns_scope'> [<a href="obex-obex.html#::obex::Server" title="::obex::Server" class='ruff_cmd'>::obex::Server</a>]</span><span class='ruff-uplink'><a href='obex-obex.html#::obex::Server'>Server</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<div style='clear:both;'></div>
+<p class='ruff'>Returns the state of the server.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>OBJECT state</span> <br></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The returned state is in the form of a dictionary with the following elements:</p>
+<table class='ruff_deflist'>
+<tr><td>State</td><td>Server state; one of <code>IDLE</code>, <code>REQUEST</code>, <code>RESPOND</code> or <code>ERROR</code></td></tr>
+<tr><td>Connected</td><td>0/1 depending on whether connected or not.</td></tr>
+<tr><td>ConnectionId</td><td>The connection id. Only present if connected.</td></tr>
+<tr><td>MaxPacketLength</td><td>Maximum packet length negotiated.</td></tr>
+<tr><td>ErrorMessage</td><td>If present, the last error seen.</td></tr>
+</table>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the state of the server.</p>
+<div class='ruff_source'><p class='ruff_source_link'><a id='l_29' href="javascript:toggleSource('29')">Show source</a></p>
+<div id='29' class='ruff_dyn_src'><pre>method state {} {
+
+    # Returns the state of the server.
+    #
+    # The returned state is in the form of a dictionary with the following
+    # elements:
+    #   State - Server state; one of `IDLE`, `REQUEST`, `RESPOND` or `ERROR`
+    #   Connected - 0/1 depending on whether connected or not.
+    #   ConnectionId - The connection id. Only present if connected.
+    #   MaxPacketLength - Maximum packet length negotiated.
+    #   ErrorMessage - If present, the last error seen.
+
+    set l [list State $state(state)  MaxPacketLength $state(max_packet_len)]
+    if {[info exists state(connection_id)]} {
+        lappend l Connected 1 ConnectionId $state(connection_id)
+    } else {
+        lappend l Connected 0
+    }
+    if {[info exists state(error_message)]} {
+        lappend l ErrorMessage $state(error_message)
+    }
+    return $l
+}</pre></div>
+</div></main><nav class='ruff-nav'><ul ><li class='ruff-toc1'><a style='padding-top:2px;' href='obex.html'>Start page</a></li>
+<li class='ruff-toc1'><a href='obex-docindex.html' accesskey='i'>Index</a></li>
+<hr>
+<li class='ruff-toc1'><a class='ruff-highlight' href='obex-obex.html'>obex</a></li>
+<li class='ruff-toc1'><a href='obex-obex-core.html'>obex::core</a></li>
+<li class='ruff-toc1'><a href='obex-obex-opp.html'>obex::opp</a></li>
+<hr><li class='ruff-toc1'><a href='#::obex'>obex</a></li><li class='ruff-toc2'><a href='#::obex-OBEX operations'>OBEX operations</a></li><li class='ruff-toc2'><a href='#::obex-Packet transfer model'>Packet transfer model</a></li><li class='ruff-toc3'><a href='#::obex-Generating requests'>Generating requests</a></li><li class='ruff-toc3'><a href='#::obex-Request completion status'>Request completion status</a></li><li class='ruff-toc3'><a href='#::obex-Synchronous completion'>Synchronous completion</a></li><li class='ruff-toc3'><a href='#::obex-Channel configuration'>Channel configuration</a></li><li class='ruff-toc3'><a href='#::obex-Generating responses'>Generating responses</a></li><li class='ruff-toc3'><a href='#::obex-OBEX headers'>OBEX headers</a></li><li class='ruff-toc2'><a href='#::obex-Classes'>Classes</a></li><li class='ruff-toc3'><a href='obex-obex.html#::obex::Client'>Client</a></li><li class='ruff-toc4'><a href='obex-obex.html#::obex::Client::constructor'>constructor</a></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::abort'>abort</a><span class='ruff-tiptext'>Generates a Obex <code>ABORT</code> request.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::await'>await</a><span class='ruff-tiptext'>Synchronously completes an ongoing operation.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::clear'>clear</a><span class='ruff-tiptext'>Clears error state if any.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::connect'>connect</a><span class='ruff-tiptext'>Generates a Obex connect request.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::connected'>connected</a><span class='ruff-tiptext'>Returns 1 if the client has an OBEX connection active.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::disconnect'>disconnect</a><span class='ruff-tiptext'>Generates a Obex disconnect request.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::get'>get</a><span class='ruff-tiptext'>Generates a Obex <code>GET</code> request.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::idle'>idle</a><span class='ruff-tiptext'>Returns 1 if another request can be issued, otherwise 0.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::input'>input</a><span class='ruff-tiptext'>Process data from the remote server.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::put'>put</a><span class='ruff-tiptext'>Generates a Obex <code>PUT</code> request.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::put_delete'>put_delete</a><span class='ruff-tiptext'>Generates a Obex <code>PUT</code> request to delete an object.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::put_stream'>put_stream</a><span class='ruff-tiptext'>Generates a Obex <code>PUT</code> request with content provided in chunks.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::reset'>reset</a><span class='ruff-tiptext'>Resets state of the object.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::response'>response</a><span class='ruff-tiptext'>Returns the last response received from the server.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::session'>session</a><span class='ruff-tiptext'>Generate a OBEX <code>session</code> request.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::setpath'>setpath</a><span class='ruff-tiptext'>Generates a Obex <code>SETPATH</code> request.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::state'>state</a><span class='ruff-tiptext'>Returns the state of the client.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::status'>status</a><span class='ruff-tiptext'>Returns the status of the last response received.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Client::status_detail'>status_detail</a><span class='ruff-tiptext'>Returns the detailed status of the last response received.
+</span></li><li class='ruff-toc3'><a href='obex-obex.html#::obex::Helper'>Helper</a></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Helper::bodies'>bodies</a><span class='ruff-tiptext'>Get the data content in a request or response
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Helper::headers'>headers</a><span class='ruff-tiptext'>Retrieves the content of headers of a given type.
+</span></li><li class='ruff-toc3'><a href='obex-obex.html#::obex::Server'>Server</a></li><li class='ruff-toc4'><a href='obex-obex.html#::obex::Server::constructor'>constructor</a></li><li class='ruff-toc4'><a href='obex-obex.html#::obex::Server::get_request'>get_request</a></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Server::input'>input</a><span class='ruff-tiptext'>Process data received from a client.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Server::reset'>reset</a><span class='ruff-tiptext'>Resets state of the object.
+</span></li><li class='ruff-toc4'><a href='obex-obex.html#::obex::Server::respond'>respond</a></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Server::respond_content'>respond_content</a><span class='ruff-tiptext'>Generate a response containing content.
+</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex.html#::obex::Server::state'>state</a><span class='ruff-tiptext'>Returns the state of the server.
+</span></li></ul></nav><footer class='ruff-layout-footer ruff-ft'><div style='float: right;'>Document generated by <a href='https://ruff.magicsplat.com'>Ruff!</a></div><div>&copy; Ashok P. Nadkarni</div></footer>
+</div></body></html>

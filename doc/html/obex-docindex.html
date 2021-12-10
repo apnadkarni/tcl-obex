@@ -1,0 +1,91 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Obex</title>
+<link rel='stylesheet' type='text/css' href='assets/ruff-min.css' />
+<script type='text/javascript' src='assets/ruff-min.js'></script>
+</head>
+<body>
+<div class='ruff-layout'>
+<header class='ruff-layout-header ruff-hd'>
+<a style='text-decoration:none;' href='obex.html'>Obex (v0.1)</a>
+
+
+            <div id="ruffButtonBar">
+            <button id="ruffNavMove" onclick="ruffMoveNavPane()"></button>
+            <button id="ruffToggleTheme" onclick="ruffNextTheme()"></button>
+            </div>
+        </header><main class='ruff-layout-main ruff-bd'><h1 class='ruff'>Index</h1><p><div class='ruff_index'>
+<input style='width:100%;' accesskey='s' type='text' id='filterText' onkeyup='myFilterHook()' placeholder='Enter index term'>
+            <div id='indexStatus'>
+            <ul>
+            <li>Type the index terms you want to search for in the text input field.
+            <li>Matching terms will be shown incrementally as you type.
+            <li>Press <kbd>Enter</kbd> to navigate to the target of the first displayed
+            index entry.
+            <li>Alternatively, <kbd>Tab</kbd> to move to the index entry of interest and then press
+            <kbd>Enter</kbd> to navigate to that documentation page.
+            <li>To jump to this page from any other documentation page,
+            press browser-specific shortcut modifiers with <kbd>i</kbd>.
+            For example, on IE and Edge this would be
+            <kbd>Alt-i</kbd> while on Firefox and Chrome <kbd>Alt-Shift-i</kbd>.
+            Other browsers and platforms may differ.
+            </ul>
+            </div>
+        
+<ul id='indexUL'>
+<li class='ruff-tip'><a href='obex-obex.html#::obex::Client::abort'>abort</a><span class='ruff-tiptext'>Generates a Obex <code>ABORT</code> request.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::await'>await</a><span class='ruff-tiptext'>Synchronously completes an ongoing operation.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Helper::bodies'>bodies</a><span class='ruff-tiptext'>Get the data content in a request or response
+</span> ::obex::Helper</li><li class='ruff-tip'><a href='obex-obex-opp.html#::obex::opp::bt_uuid'>bt_uuid</a><span class='ruff-tiptext'>Returns the Bluetooth UUID for the service class for the Object Push Profile.
+</span> ::obex::opp</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::clear'>clear</a><span class='ruff-tiptext'>Clears error state if any.
+</span> ::obex::Client</li><li><a href='obex-obex.html#::obex::Client'>Client</a> ::obex</li><li><a href='obex-obex-opp.html#::obex::opp::Client'>Client</a> ::obex::opp</li><li class='ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::close'>close</a><span class='ruff-tiptext'>Closes an OBEX connection.
+</span> ::obex::opp::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::connect'>connect</a><span class='ruff-tiptext'>Generates a Obex connect request.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::connected'>connected</a><span class='ruff-tiptext'>Returns 1 if the client has an OBEX connection active.
+</span> ::obex::Client</li><li><a href='obex-obex.html#::obex::Client::constructor'>constructor</a> ::obex::Client</li><li><a href='obex-obex.html#::obex::Server::constructor'>constructor</a> ::obex::Server</li><li class='ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::constructor'>constructor</a><span class='ruff-tiptext'>Creates a client object for the OBEX Object Push Profile.
+</span> ::obex::opp::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::disconnect'>disconnect</a><span class='ruff-tiptext'>Generates a Obex disconnect request.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::exchange_cards'>exchange_cards</a><span class='ruff-tiptext'>Exchanges business cards with a device.
+</span> ::obex::opp::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::get'>get</a><span class='ruff-tiptext'>Generates a Obex <code>GET</code> request.
+</span> ::obex::Client</li><li><a href='obex-obex.html#::obex::Server::get_request'>get_request</a> ::obex::Server</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::header decode'>header decode</a><span class='ruff-tiptext'>Decodes a single binary OBEX header within a packet.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::header decoden'>header decoden</a><span class='ruff-tiptext'>Decodes binary OBEX headers within a packet.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::header encode'>header encode</a><span class='ruff-tiptext'>Encodes a single OBEX header.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::header encoden'>header encoden</a><span class='ruff-tiptext'>Encodes multiple OBEX headers.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::header find'>header find</a><span class='ruff-tiptext'>Gets the value of a header from a list of decoded OBEX headers.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::header findall'>header findall</a><span class='ruff-tiptext'>Gets the values of headers with a given name in list of decoded OBEX headers
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Helper::headers'>headers</a><span class='ruff-tiptext'>Retrieves the content of headers of a given type.
+</span> ::obex::Helper</li><li><a href='obex-obex.html#::obex::Helper'>Helper</a> ::obex</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::idle'>idle</a><span class='ruff-tiptext'>Returns 1 if another request can be issued, otherwise 0.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::input'>input</a><span class='ruff-tiptext'>Process data from the remote server.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Server::input'>input</a><span class='ruff-tiptext'>Process data received from a client.
+</span> ::obex::Server</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::packet complete'>packet complete</a><span class='ruff-tiptext'>Returns 1 if <code>$packet</code> is a complete Obex packet and 0 otherwise.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::packet length'>packet length</a><span class='ruff-tiptext'>Get the length of a packet.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::parameters decode'>parameters decode</a><span class='ruff-tiptext'>Decodes a <a href="obex-obex.html#::obex-OBEX headers" title="AppParameters" >AppParameters</a> header value.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::pull_card'>pull_card</a><span class='ruff-tiptext'>Retrieves the business card from the device.
+</span> ::obex::opp::Client</li><li class='ruff-tip'><a href='obex-obex-opp.html#::obex::opp::Client::push_file'>push_file</a><span class='ruff-tiptext'>Pushes the specified file over the given channel.
+</span> ::obex::opp::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::put'>put</a><span class='ruff-tiptext'>Generates a Obex <code>PUT</code> request.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::put_delete'>put_delete</a><span class='ruff-tiptext'>Generates a Obex <code>PUT</code> request to delete an object.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::put_stream'>put_stream</a><span class='ruff-tiptext'>Generates a Obex <code>PUT</code> request with content provided in chunks.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::request decode'>request decode</a><span class='ruff-tiptext'>Decodes an OBEX request packet received from a client.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::request encode'>request encode</a><span class='ruff-tiptext'>Encodes an OBEX request.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::request encode_setpath'>request encode_setpath</a><span class='ruff-tiptext'>Encodes a <code>setpath</code> OBEX request.
+</span> ::obex::core</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::reset'>reset</a><span class='ruff-tiptext'>Resets state of the object.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Server::reset'>reset</a><span class='ruff-tiptext'>Resets state of the object.
+</span> ::obex::Server</li><li><a href='obex-obex.html#::obex::Server::respond'>respond</a> ::obex::Server</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Server::respond_content'>respond_content</a><span class='ruff-tiptext'>Generate a response containing content.
+</span> ::obex::Server</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::response'>response</a><span class='ruff-tiptext'>Returns the last response received from the server.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex-core.html#::obex::core::response decode'>response decode</a><span class='ruff-tiptext'>Decodes a response packet.
+</span> ::obex::core</li><li><a href='obex-obex.html#::obex::Server'>Server</a> ::obex</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::session'>session</a><span class='ruff-tiptext'>Generate a OBEX <code>session</code> request.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::setpath'>setpath</a><span class='ruff-tiptext'>Generates a Obex <code>SETPATH</code> request.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::state'>state</a><span class='ruff-tiptext'>Returns the state of the client.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Server::state'>state</a><span class='ruff-tiptext'>Returns the state of the server.
+</span> ::obex::Server</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::status'>status</a><span class='ruff-tiptext'>Returns the status of the last response received.
+</span> ::obex::Client</li><li class='ruff-tip'><a href='obex-obex.html#::obex::Client::status_detail'>status_detail</a><span class='ruff-tiptext'>Returns the detailed status of the last response received.
+</span> ::obex::Client</li>
+</ul>
+</div><script>function myIndexInit(){var single,nvisible,urltext,a;filterElement=document.getElementById("filterText");urltext=myGetUrlParameter("lookup");if(urltext==""){urltext=myGetUrlParameter("search")}if(urltext!=""){filterElement.value=urltext;myRunFilter()}filterElement.focus()}function myGetUrlParameter(name){name=name.replace(/[\[]/,"\\[").replace(/[\]]/,"\\]");var regex=new RegExp("[\\?&]"+name+"=([^&#]*)");var results=regex.exec(location.search);return results===null?"":decodeURIComponent(results[1].replace(/\+/g," "))}var myDebounceDelay;var myUserAgent=navigator.userAgent.toUpperCase();if(myUserAgent.indexOf("MSIE")!=-1||myUserAgent.indexOf("TRIDENT")!=-1){myDebounceDelay=300}else if(myUserAgent.indexOf("EDGE")!=-1){myDebounceDelay=300}else{myDebounceDelay=100}function myDebounce(func,wait,immediate){var timeout;return function(){var context=this,args=arguments;var later=function(){timeout=null;if(!immediate)func.apply(context,args)};var callNow=immediate&&!timeout;clearTimeout(timeout);timeout=setTimeout(later,wait);if(callNow)func.apply(context,args)}}function mySetStatus(text){var status;status=document.getElementById("indexStatus");status.innerText=text}function myResetStatus(){var status;status=document.getElementById("indexStatus");status.innerText=" "}function myRunFilter(){var input,filter,filter0,ul,li,a,i,txtValue,matchSeen,firstMatch;input=document.getElementById("filterText");filter=input.value.toUpperCase();filter0=filter.charAt(0);ul=document.getElementById("indexUL");li=ul.getElementsByTagName("li");if(filter==""){myResetStatus();for(i=0;i<li.length;i++){li[i].style.display=""}}else{matchSeen=0;firstMatch=-1;for(i=0;i<li.length;i++){a=li[i].getElementsByTagName("a")[0];txtValue=a.textContent||a.innerText;txtValue=txtValue.toUpperCase();if(txtValue.charAt(0)==filter0&&txtValue.startsWith(filter)){if(myLastKey==13){myResetStatus();document.location.href=a.href;return}else{li[i].style.display="";matchSeen++;if(firstMatch==-1)firstMatch=i}}else{if(matchSeen){break}li[i].style.display="none"}}for(;i<li.length;i++){li[i].style.display="none"}myResetStatus();if(matchSeen==1){}}}var myFilterFunction=myDebounce(myRunFilter,myDebounceDelay);var myLastKey=0;function myFilterHook(){myLastKey=event.keyCode;mySetStatus("Searching...");myFilterFunction()}</script>
+<script>
+myIndexInit();</script>
+</main><nav class='ruff-nav'><ul ><li class='ruff-toc1'><a style='padding-top:2px;' href='obex.html'>Start page</a></li>
+<li class='ruff-toc1'><a class='ruff-highlight' href='obex-docindex.html'>Index</a></li>
+<hr>
+<li class='ruff-toc1'><a href='obex-obex.html'>obex</a></li>
+<li class='ruff-toc1'><a href='obex-obex-core.html'>obex::core</a></li>
+<li class='ruff-toc1'><a href='obex-obex-opp.html'>obex::opp</a></li>
+<hr></ul></nav><footer class='ruff-layout-footer ruff-ft'><div style='float: right;'>Document generated by <a href='https://ruff.magicsplat.com'>Ruff!</a></div><div>&copy; Ashok P. Nadkarni</div></footer>
+</div></body></html>
