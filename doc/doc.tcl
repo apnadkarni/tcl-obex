@@ -480,7 +480,8 @@ proc obex::Document {outfile args} {
     ruff::document $namespaces -autopunctuate 1 -excludeprocs {^[_A-Z]} \
         -excludeclasses [list ${ns}::Server] \
         -recurse 0 -preamble $_preamble -pagesplit namespace \
-        -output $outfile -includesource 1 \
+        -outfile $outfile -includesource 1 \
+        -outdir html \
         -title "obex package reference (V[package present obex])" \
         {*}$args
 }
