@@ -482,7 +482,8 @@ proc obex::Document {outfile args} {
         -recurse 0 -preamble $_preamble -pagesplit namespace \
         -outfile $outfile -includesource 1 \
         -outdir html \
-        -title "obex package reference (V[package present obex])" \
+        -version [package present obex] \
+        -copyright "Ashok P. Nadkarni" \
         {*}$args
 }
 
