@@ -13,15 +13,29 @@
             <button id="ruffNavMove" onclick="ruffMoveNavPane()"></button>
             <button id="ruffToggleTheme" onclick="ruffNextTheme()"></button>
             </div>
-        </header><main class='ruff-layout-main ruff-bd'><h1 class='ruff'><a name='::obex::core'></a>::obex::core<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h1>
+        </header><main class='ruff-layout-main ruff-bd'><h1 class='ruff'><a name='::obex::core'></a>::obex::core<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h1>
 <div style='clear:both;'></div>
 <p class='ruff'>The <code>obex::core</code> namespace contains the low level commands implementing the OBEX protocol. Their use is not recommended without detailed knowledge of the protocol. The classes and commands in the other <code>obex</code> namespaces should be used instead.</p>
-<h2 class='ruff'><a name='::obex::core-Commands'></a>Commands<span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<h2 class='ruff'><a name='::obex::core-Commands'></a>Commands<span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h2>
 <div style='clear:both;'></div>
-<h4 class='ruffproc'><a name='::obex::core::header decode'>header decode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+<h3 class='ruffproc'><a name='::obex::core::header'>header</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>A command ensemble.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>header</span> <span class='ruff_arg'>subcommand ...</span></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The ensemble supports the following subcommands:</p>
+<table class='ruff_deflist'>
+<tr><td><a href="obex-obex-core.html#::obex::core::header decode" title="decode" class='ruff_cmd'>decode</a></td><td>Decodes a single binary OBEX header within a packet.</td></tr>
+<tr><td><a href="obex-obex-core.html#::obex::core::header decoden" title="decoden" class='ruff_cmd'>decoden</a></td><td>Decodes binary OBEX headers within a packet.</td></tr>
+<tr><td><a href="obex-obex-core.html#::obex::core::header encode" title="encode" class='ruff_cmd'>encode</a></td><td>Encodes a single OBEX header.</td></tr>
+<tr><td><a href="obex-obex-core.html#::obex::core::header encoden" title="encoden" class='ruff_cmd'>encoden</a></td><td>Encodes multiple OBEX headers.</td></tr>
+<tr><td><a href="obex-obex-core.html#::obex::core::header find" title="find" class='ruff_cmd'>find</a></td><td>Gets the value of a header from a list of decoded OBEX headers.</td></tr>
+<tr><td><a href="obex-obex-core.html#::obex::core::header findall" title="findall" class='ruff_cmd'>findall</a></td><td>Gets the values of headers with a given name in list of decoded OBEX headers.</td></tr>
+</table>
+<p class='ruff'>Refer to the documentation of each subcommand for details.</p>
+<h3 class='ruffproc'><a name='::obex::core::header decode'>header decode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Decodes a single binary OBEX header within a packet.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>header decode</span> <span class='ruff_arg'>bytes start</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>header decode</span> <span class='ruff_arg'>bytes start</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>bytes</code></td><td>Binary string containing a header.</td></tr>
 <tr><td><code>start</code></td><td>Offset into <code>$bytes</code> where the header starts.</td></tr>
@@ -38,10 +52,10 @@
     return [lrange [DecodeFirst $bytes $start] 0 1]
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::header decoden'>header decoden</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::header decoden'>header decoden</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Decodes binary OBEX headers within a packet.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>header decoden</span> <span class='ruff_arg'>bytes start</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>header decoden</span> <span class='ruff_arg'>bytes start</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>bytes</code></td><td>Binary string containing headers.</td></tr>
 <tr><td><code>start</code></td><td>Offset into <code>$bytes</code> where the headers start.</td></tr>
@@ -64,10 +78,10 @@
     return $headers
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::header encode'>header encode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::header encode'>header encode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Encodes a single OBEX header.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>header encode</span> <span class='ruff_arg'>header_name header_value</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>header encode</span> <span class='ruff_arg'>header_name header_value</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>header_name</code></td><td>The <a href="obex-obex.html#::obex-OBEX headers" title="header identifier" >header identifier</a> name.</td></tr>
 <tr><td><code>header_value</code></td><td>The value to encode. For binary header types, it is caller's responsibility to pass this as a proper binary string.</td></tr>
@@ -111,10 +125,10 @@
     }
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::header encoden'>header encoden</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::header encoden'>header encoden</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Encodes multiple OBEX headers.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>header encoden</span> <span class='ruff_arg'>?args?</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>header encoden</span> <span class='ruff_arg'>?args?</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>args</code></td><td>Alternating list of <a href="obex-obex.html#::obex-OBEX headers" title="header names" >header names</a> and values. This may also be provided as a single argument of the same form. For binary header types, it is caller's responsibility to pass the values as a proper binary string.</td></tr>
 </table>
@@ -139,10 +153,10 @@
     return $headers
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::header find'>header find</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::header find'>header find</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Gets the value of a header from a list of decoded OBEX headers.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>header find</span> <span class='ruff_arg'>headers header_name outvar</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>header find</span> <span class='ruff_arg'>headers header_name outvar</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>headers</code></td><td>List of decoded OBEX headers.</td></tr>
 <tr><td><code>header_name</code></td><td><a href="obex-obex.html#::obex-OBEX headers" title="Header name" >Header name</a> to retrieve.</td></tr>
@@ -173,10 +187,10 @@
     return 0
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::header findall'>header findall</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::header findall'>header findall</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Gets the values of headers with a given name in list of decoded OBEX headers</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>header findall</span> <span class='ruff_arg'>headers header_name</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>header findall</span> <span class='ruff_arg'>headers header_name</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>headers</code></td><td>List of decoded OBEX headers.</td></tr>
 <tr><td><code>header_name</code></td><td><a href="obex-obex.html#::obex-OBEX headers" title="Header name" >Header name</a> to retrieve.</td></tr>
@@ -198,10 +212,20 @@
     }]
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::packet complete'>packet complete</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::packet'>packet</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>A command ensemble.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>packet</span> <span class='ruff_arg'>subcommand ...</span></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The ensemble supports the following subcommands:</p>
+<table class='ruff_deflist'>
+<tr><td><a href="obex-obex-core.html#::obex::core::packet complete" title="complete" class='ruff_cmd'>complete</a></td><td>Returns 1 if <code>$packet</code> is a complete Obex packet and 0 otherwise.</td></tr>
+<tr><td><a href="obex-obex-core.html#::obex::core::packet length" title="length" class='ruff_cmd'>length</a></td><td>Get the length of a packet.</td></tr>
+</table>
+<p class='ruff'>Refer to the documentation of each subcommand for details.</p>
+<h3 class='ruffproc'><a name='::obex::core::packet complete'>packet complete</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Returns 1 if <code>$packet</code> is a complete Obex packet and 0 otherwise.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>packet complete</span> <span class='ruff_arg'>packet</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>packet complete</span> <span class='ruff_arg'>packet</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>packet</code></td><td>An OBEX packet or fragment.</td></tr>
 </table>
@@ -217,10 +241,10 @@
     return [expr {$len &lt;= [string length $packet]}]
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::packet length'>packet length</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::packet length'>packet length</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Get the length of a packet.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>packet length</span> <span class='ruff_arg'>packet</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>packet length</span> <span class='ruff_arg'>packet</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>packet</code></td><td>An OBEX packet or the initial fragment of one with at least three bytes.</td></tr>
 </table>
@@ -240,10 +264,19 @@
     return $len
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::parameters decode'>parameters decode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::parameters'>parameters</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>A command ensemble.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>parameters</span> <span class='ruff_arg'>subcommand ...</span></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The ensemble supports the following subcommands:</p>
+<table class='ruff_deflist'>
+<tr><td><a href="obex-obex-core.html#::obex::core::parameters decode" title="decode" class='ruff_cmd'>decode</a></td><td>Decodes a <a href="obex-obex.html#::obex-OBEX headers" title="AppParameters" >AppParameters</a> header value.</td></tr>
+</table>
+<p class='ruff'>Refer to the documentation of each subcommand for details.</p>
+<h3 class='ruffproc'><a name='::obex::core::parameters decode'>parameters decode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Decodes a <a href="obex-obex.html#::obex-OBEX headers" title="AppParameters" >AppParameters</a> header value.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>parameters decode</span> <span class='ruff_arg'>bytes</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>parameters decode</span> <span class='ruff_arg'>bytes</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>bytes</code></td><td>Binary containing the header value.</td></tr>
 </table>
@@ -265,10 +298,21 @@
     return $params
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::request decode'>request decode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::request'>request</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>A command ensemble.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>request</span> <span class='ruff_arg'>subcommand ...</span></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The ensemble supports the following subcommands:</p>
+<table class='ruff_deflist'>
+<tr><td><a href="obex-obex-core.html#::obex::core::request decode" title="decode" class='ruff_cmd'>decode</a></td><td>Decodes an OBEX request packet received from a client.</td></tr>
+<tr><td><a href="obex-obex-core.html#::obex::core::request encode" title="encode" class='ruff_cmd'>encode</a></td><td>Encodes an OBEX request.</td></tr>
+<tr><td><a href="obex-obex-core.html#::obex::core::request encode_setpath" title="encode_setpath" class='ruff_cmd'>encode_setpath</a></td><td>Encodes a <code>setpath</code> OBEX request.</td></tr>
+</table>
+<p class='ruff'>Refer to the documentation of each subcommand for details.</p>
+<h3 class='ruffproc'><a name='::obex::core::request decode'>request decode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Decodes an OBEX request packet received from a client.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>request decode</span> <span class='ruff_arg'>packet outvar</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>request decode</span> <span class='ruff_arg'>packet outvar</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>packet</code></td><td>Binary OBEX packet.</td></tr>
 <tr><td><code>outvar</code></td><td>Name of variable in caller's context where the decoded packet is to be stored.</td></tr>
@@ -352,10 +396,10 @@
     return 1
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::request encode'>request encode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::request encode'>request encode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Encodes an OBEX request.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>request encode</span> <span class='ruff_arg'>op ?args?</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>request encode</span> <span class='ruff_arg'>op ?args?</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>op</code></td><td>A numeric request opcode or a opcode <a href="obex-obex.html#::obex-OBEX operations" title="mnemonic" >mnemonic</a>.</td></tr>
 <tr><td><code>args</code></td><td>Alternating list of <a href="obex-obex.html#::obex-OBEX headers" title="header names" >header names</a> and values. This may also be provided as a single argument of the same form.</td></tr>
@@ -389,10 +433,10 @@
     return $packet
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::request encode_setpath'>request encode_setpath</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::request encode_setpath'>request encode_setpath</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Encodes a <code>setpath</code> OBEX request.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>request encode_setpath</span> <span class='ruff_arg'>flags constants ?args?</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>request encode_setpath</span> <span class='ruff_arg'>flags constants ?args?</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>flags</code></td><td>Numeric value to send for the flags field in the <code>setpath</code> request.</td></tr>
 <tr><td><code>constants</code></td><td>Numeric value to send for the constants field in the request.</td></tr>
@@ -428,10 +472,19 @@
     return $packet
 }
 # NOTE: showing source of procedure implementing ensemble subcommand.</pre></div>
-</div><h4 class='ruffproc'><a name='::obex::core::response decode'>response decode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h4>
+</div><h3 class='ruffproc'><a name='::obex::core::response'>response</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
+<div style='clear:both;'></div>
+<p class='ruff'>A command ensemble.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>response</span> <span class='ruff_arg'>subcommand ...</span></div>
+<h5 class='ruff'>Description</h5><p class='ruff'>The ensemble supports the following subcommands:</p>
+<table class='ruff_deflist'>
+<tr><td><a href="obex-obex-core.html#::obex::core::response decode" title="decode" class='ruff_cmd'>decode</a></td><td>Decodes a response packet.</td></tr>
+</table>
+<p class='ruff'>Refer to the documentation of each subcommand for details.</p>
+<h3 class='ruffproc'><a name='::obex::core::response decode'>response decode</a><span class='ns_scope'> [<a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a>]</span><span class='ruff-uplink'><a href='obex-obex-core.html#::obex::core'>core</a>, <a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Decodes a response packet.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>response decode</span> <span class='ruff_arg'>packet request_op outvar</span><br></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>response decode</span> <span class='ruff_arg'>packet request_op outvar</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td><code>packet</code></td><td>Binary OBEX packet.</td></tr>
 <tr><td><code>request_op</code></td><td>The request opcode corresponding to this response.</td></tr>
@@ -504,18 +557,23 @@
 <li class='ruff-toc1'><a href='obex-obex.html'>obex</a></li>
 <li class='ruff-toc1'><a class='ruff-highlight' href='obex-obex-core.html'>obex::core</a></li>
 <li class='ruff-toc1'><a href='obex-obex-opp.html'>obex::opp</a></li>
-<hr><li class='ruff-toc1'><a href='#::obex::core'>obex::core</a></li><li class='ruff-toc2'><a href='#::obex::core-Commands'>Commands</a></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::header decode'>header decode</a><span class='ruff-tiptext'>Decodes a single binary OBEX header within a packet.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::header decoden'>header decoden</a><span class='ruff-tiptext'>Decodes binary OBEX headers within a packet.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::header encode'>header encode</a><span class='ruff-tiptext'>Encodes a single OBEX header.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::header encoden'>header encoden</a><span class='ruff-tiptext'>Encodes multiple OBEX headers.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::header find'>header find</a><span class='ruff-tiptext'>Gets the value of a header from a list of decoded OBEX headers.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::header findall'>header findall</a><span class='ruff-tiptext'>Gets the values of headers with a given name in list of decoded OBEX headers
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::packet complete'>packet complete</a><span class='ruff-tiptext'>Returns 1 if <code>$packet</code> is a complete Obex packet and 0 otherwise.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::packet length'>packet length</a><span class='ruff-tiptext'>Get the length of a packet.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::parameters decode'>parameters decode</a><span class='ruff-tiptext'>Decodes a <a href="obex-obex.html#::obex-OBEX headers" title="AppParameters" >AppParameters</a> header value.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::request decode'>request decode</a><span class='ruff-tiptext'>Decodes an OBEX request packet received from a client.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::request encode'>request encode</a><span class='ruff-tiptext'>Encodes an OBEX request.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::request encode_setpath'>request encode_setpath</a><span class='ruff-tiptext'>Encodes a <code>setpath</code> OBEX request.
-</span></li><li class='ruff-toc4 ruff-tip'><a href='obex-obex-core.html#::obex::core::response decode'>response decode</a><span class='ruff-tiptext'>Decodes a response packet.
+<hr><li class='ruff-toc2'><a href='#::obex::core-Commands'>Commands</a></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::header'>header</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>header</span> <span class='ruff_arg'>subcommand ...</span></pre>A command ensemble.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::header decode'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> decode</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>header decode</span> <span class='ruff_arg'>bytes start</span></pre>Decodes a single binary OBEX header within a packet.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::header decoden'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> decoden</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>header decoden</span> <span class='ruff_arg'>bytes start</span></pre>Decodes binary OBEX headers within a packet.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::header encode'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> encode</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>header encode</span> <span class='ruff_arg'>header_name header_value</span></pre>Encodes a single OBEX header.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::header encoden'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> encoden</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>header encoden</span> <span class='ruff_arg'>?args?</span></pre>Encodes multiple OBEX headers.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::header find'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> find</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>header find</span> <span class='ruff_arg'>headers header_name outvar</span></pre>Gets the value of a header from a list of decoded OBEX headers.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::header findall'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> findall</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>header findall</span> <span class='ruff_arg'>headers header_name</span></pre>Gets the values of headers with a given name in list of decoded OBEX headers
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::packet'>packet</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>packet</span> <span class='ruff_arg'>subcommand ...</span></pre>A command ensemble.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::packet complete'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> complete</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>packet complete</span> <span class='ruff_arg'>packet</span></pre>Returns 1 if <code>$packet</code> is a complete Obex packet and 0 otherwise.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::packet length'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> length</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>packet length</span> <span class='ruff_arg'>packet</span></pre>Get the length of a packet.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::parameters'>parameters</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>parameters</span> <span class='ruff_arg'>subcommand ...</span></pre>A command ensemble.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::parameters decode'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> decode</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>parameters decode</span> <span class='ruff_arg'>bytes</span></pre>Decodes a <a href="obex-obex.html#::obex-OBEX headers" title="AppParameters" >AppParameters</a> header value.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::request'>request</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>request</span> <span class='ruff_arg'>subcommand ...</span></pre>A command ensemble.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::request decode'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> decode</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>request decode</span> <span class='ruff_arg'>packet outvar</span></pre>Decodes an OBEX request packet received from a client.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::request encode'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> encode</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>request encode</span> <span class='ruff_arg'>op ?args?</span></pre>Encodes an OBEX request.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::request encode_setpath'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> encode_setpath</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>request encode_setpath</span> <span class='ruff_arg'>flags constants ?args?</span></pre>Encodes a <code>setpath</code> OBEX request.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::response'>response</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>response</span> <span class='ruff_arg'>subcommand ...</span></pre>A command ensemble.
+</span></li><li class='ruff-toc3 ruff-tip'><a href='obex-obex-core.html#::obex::core::response decode'><span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> decode</a><span class='ruff-tiptext'><pre><span class='ruff_cmd'>response decode</span> <span class='ruff_arg'>packet request_op outvar</span></pre>Decodes a response packet.
 </span></li></ul></nav><footer class='ruff-layout-footer ruff-ft'><div style='float: right;'>Document generated by <a href='https://ruff.magicsplat.com'>Ruff!</a></div><div>&copy; Ashok P. Nadkarni</div></footer>
 </div></body></html>

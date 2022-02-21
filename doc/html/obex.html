@@ -13,11 +13,11 @@
             <button id="ruffNavMove" onclick="ruffMoveNavPane()"></button>
             <button id="ruffToggleTheme" onclick="ruffNextTheme()"></button>
             </div>
-        </header><main class='ruff-layout-main ruff-bd'><h2 class='ruff'><a name='Introduction'></a>Introduction<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+        </header><main class='ruff-layout-main ruff-bd'><h2 class='ruff'><a name='Introduction'></a>Introduction<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>The Object Exchange (OBEX) standard defines a protocol and application framework for transferring objects and related meta-information between two devices. It is similar to HTTP in functionality except that it is geared towards smaller devices with more constrained resources. Originally designed for use over IrDA, it is now used over other transport protocols as well, in particular Bluetooth and TCP/IP.</p>
 <p class='ruff'>The <code>obex</code> package is an implementation of this protocol.</p>
-<h2 class='ruff'><a name='Download and install'></a>Download and install<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<h2 class='ruff'><a name='Download and install'></a>Download and install<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>The package is distributed as a single file Tcl module and may be downloaded from <a href="https://sourceforge.net/projects/magicsplat/files/obex/">https://sourceforge.net/projects/magicsplat/files/obex/</a>. To install the package, run the following command from the command line:</p>
 <pre class='ruff'>
@@ -39,20 +39,20 @@ package require obex
 <tr><td><a href="obex-obex-core.html#::obex::core" title="::obex::core" class='ruff_cmd'>::obex::core</a></td><td>Implements core low-level protocol commands.</td></tr>
 </table>
 <p class='ruff'>It is intended that details of the OBEX protocol is not required to use the <code>obex</code> package but some basic knowledge is useful. The sections below provide an overview.</p>
-<h2 class='ruff'><a name='The OBEX protocol'></a>The OBEX protocol<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<h2 class='ruff'><a name='The OBEX protocol'></a>The OBEX protocol<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>The OBEX session protocol is a client-server protocol where the client sends a request to a server which then sends a response back to the client. <strong>The protocol only permits one request to be outstanding at a time.</strong> Of course, independent requests may be in progress on separate transport connections.</p>
-<h2 class='ruff'><a name='OBEX requests'></a>OBEX requests<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<h2 class='ruff'><a name='OBEX requests'></a>OBEX requests<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>Each request is composed of multiple request packets based on the maximum packet size supported by the two ends of the OBEX conversation.</p>
 <p class='ruff'>A request packet begins with a <em>operation code</em>, or <em>opcode</em>, which specifies the requested operation, followed by a length field containing the length of the packet. These fixed fields are followed by optional <em>headers</em> which contain the attributes and data describing the desired operation. All request packets making up a single request start with the same operation code. The last packet in the request is marked by a special <em>final</em> bit which indicates the request is complete.</p>
 <p class='ruff'>The request opcodes have corresponding methods defined in the package. These are described in <a href="obex-obex.html#::obex-OBEX operations" title="OBEX operations" >OBEX operations</a>.</p>
 <p class='ruff'>The actual content itself, along with any metadata, is transferred in OBEX as a sequence of <em><a href="obex-obex.html#::obex-OBEX headers" title="headers" >headers</a></em>, possible across multiple packets.</p>
-<h2 class='ruff'><a name='OBEX responses'></a>OBEX responses<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<h2 class='ruff'><a name='OBEX responses'></a>OBEX responses<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>Like requests, responses may be broken up into multiple response packets. A response packet has a similar structure to request packets except that the leading byte is a response code as opposed to a request opcode. These response codes are analogous to HTTP status codes and map to request completion status values as described in <a href="obex-obex.html#::obex-Request completion status" title="Request completion status" >Request completion status</a>.</p>
 <p class='ruff'>Just like for requests, the data and related information in responses is transferred in the form of <a href="obex-obex.html#::obex-OBEX headers" title="headers" >headers</a>.</p>
-<h2 class='ruff'><a name='OBEX profiles'></a>OBEX profiles<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<h2 class='ruff'><a name='OBEX profiles'></a>OBEX profiles<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>A <em>profile</em> defines</p>
 <ul class='ruff'>
@@ -63,7 +63,7 @@ package require obex
 <p class='ruff'>Two independently developed applications adhering to the same profile are assured of interoperability.</p>
 <p class='ruff'>As an example, consider the <em>Bluetooth Phone Book Access Profile (PBAP)</em>. The usage scenario for the profile is retrieval of phone book entries stored on a <em>server</em> device from a <em>client</em> device. The protocol requirements include OBEX over RFCOMM over L2CAP as the transport with SDP for service advertising. The operations include GET/PUT for retrieval of the phone book as well as individual entries. Message formats include use of specific OBEX headers and formats specific to the content (e.g. v-card).</p>
 <p class='ruff'>In the <code>obex</code> package, profiles are implemented within namespace that reflect the profile name. For example, the client and server classes for the <em>Object Push Profile (OPP)</em> are contained in the <code>::obex::opp</code> namespace.</p>
-<h2 class='ruff'><a name='References'></a>References<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex_docindex.html#'>Index</a></span></h2>
+<h2 class='ruff'><a name='References'></a>References<span class='ruff-uplink'><a href='#top'>Top</a>, <a href='obex.html'>Main</a>, <a href='obex-docindex.html#'>Index</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>For a tutorial and examples see these <a href="https://www.magicsplat.com/blog/tags/bluetooth/" >blog posts</a>.</p>
 <p class='ruff'>An older version of the OBEX specification is available as a <a href="https://www.irda.org/standards/pubs/OBEX13.pdf" >PDF</a>. Newer versions require membership in IrDA.</p>
