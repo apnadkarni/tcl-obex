@@ -5,7 +5,7 @@
 # See the file LICENSE for license
 
 namespace eval obex {
-    variable version 0.1
+    variable version 0.1.1
 
     # This script name and where it resides
     variable script [file tail [info script]]
@@ -582,7 +582,7 @@ proc obex::core::request::OpName {op} {
     }
     proc OpName {op} {
         variable OpNames
-        if {[string is integer -strict $op]} {
+        if {[string is integer -strict $op] && $op <= 0xff} {
             set op [format 0x%2.2X $op]
             if {[info exists OpNames($op)]} {
                 return $OpNames($op)
